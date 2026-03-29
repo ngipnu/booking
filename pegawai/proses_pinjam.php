@@ -46,7 +46,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($koneksi->query($sql)) {
         $_SESSION['pesan_sukses'] = "Peminjaman berhasil diajukan! Menunggu persetujuan admin.";
 
-        // --- Notifikasi Email via PHPMailer SMTP ---
+        // Notifikasi in-app ke semua admin
+        $admins = $koneksi->query("SELECT id FROM users WHERE role = 'admin'");
+        $admin_ids = [];
+        while ($a = $admins->fetch_assoc()) $admin_ids[] = $a['id'];
+
+        if ($id_aset !== 'NULL') {
+            $item_info = $koneksi->query("SELECT nama_aset FROM aset WHERE id = $id_aset")->fetch_assoc();
+            $item_name = $item_info['nama_aset'];
+            $notif_link = '../../admin/peminjaman/index.php';
+        } else {
+            $item_info = $koneksi->query("SELECT nama_ruangan FROM ruangan WHERE id = $id_ruangan")->fetch_assoc();
+            $item_name = $item_info['nama_ruangan'];
+            $notif_link = '../../admin/peminjaman/index.php';
+        }
+        kirimNotifikasi($koneksi, $admin_ids,
+            "📋 Pengajuan Baru: $item_name",
+            "{$_SESSION['nama_pemakai']} ({$_SESSION['unit_pemakai']}) mengajukan peminjaman " .
+            "\"$item_name\" pada " . date('d M Y', strtotime($tgl_pinjam)) . " pukul " . 
+            substr($jam_mulai,0,5) . "–" . substr($jam_selesai,0,5) . ".",
+            'warning',
+            $notif_link
+        );
+
         try {
             require_once '../config/mailer.php';
             

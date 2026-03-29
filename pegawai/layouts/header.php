@@ -68,6 +68,29 @@ $primary_color = isset($matches[0]) ? $matches[0] : '#3b82f6';
                     <div class="fw-bold text-dark small mb-0"><?= htmlspecialchars($_SESSION['nama']) ?></div>
                     <div class="text-muted" style="font-size: 0.65rem;">Username: <?= htmlspecialchars($_SESSION['username']) ?></div>
                 </div>
+
+                <!-- Bell Notifikasi User -->
+                <div class="dropdown" id="notif-dropdown-user">
+                    <button class="btn btn-light border-0 rounded-circle position-relative p-2" id="notifBellUser"
+                            data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false"
+                            style="width:42px;height:42px;" title="Notifikasi">
+                        <i class="fa-solid fa-bell fs-6 text-muted"></i>
+                        <span id="notif-badge-user" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" style="font-size:0.6rem;">0</span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end border-0 shadow-lg rounded-4 mt-2 p-0" style="min-width:340px;max-width:360px;">
+                        <div class="d-flex justify-content-between align-items-center px-3 py-3 border-bottom">
+                            <h6 class="mb-0 fw-bold"><i class="fa-solid fa-bell me-2 text-primary"></i> Notifikasi</h6>
+                            <button class="btn btn-link btn-sm text-muted p-0 text-decoration-none" onclick="bacaSemua('user')" style="font-size:0.75rem;">Tandai semua dibaca</button>
+                        </div>
+                        <div id="notif-list-user" style="max-height:360px;overflow-y:auto;">
+                            <div class="text-center text-muted py-4"><i class="fa-solid fa-spinner fa-spin"></i></div>
+                        </div>
+                        <div class="px-3 py-2 border-top text-center">
+                            <a href="peminjaman.php" class="text-primary small fw-bold text-decoration-none">Lihat semua aktivitas →</a>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="dropdown">
                     <button class="btn btn-white border shadow-sm rounded-circle p-1 overflow-hidden" type="button" data-bs-toggle="dropdown" style="width: 42px; height: 42px;">
                         <img src="https://ui-avatars.com/api/?name=<?= urlencode($_SESSION['nama']) ?>&background=<?= ltrim($primary_color, '#') ?>&color=fff&bold=true" alt="Avatar" width="38" height="38" class="rounded-circle">
@@ -84,3 +107,57 @@ $primary_color = isset($matches[0]) ? $matches[0] : '#3b82f6';
             </div>
         </div>
     </nav>
+
+<script>
+const NOTIF_API_USER = '../api/notifikasi.php';
+
+async function muatNotifikasiUser() {
+    try {
+        const res  = await fetch(NOTIF_API_USER + '?aksi=get');
+        const data = await res.json();
+        const badge = document.getElementById('notif-badge-user');
+        const list  = document.getElementById('notif-list-user');
+
+        if (data.unread > 0) {
+            badge.textContent = data.unread > 9 ? '9+' : data.unread;
+            badge.classList.remove('d-none');
+        } else {
+            badge.classList.add('d-none');
+        }
+
+        if (!data.notifikasi || data.notifikasi.length === 0) {
+            list.innerHTML = '<div class="text-center text-muted py-4 small"><i class="fa-solid fa-bell-slash mb-2 d-block fs-4 opacity-30"></i>Belum ada notifikasi</div>';
+            return;
+        }
+
+        const colors = {success:'#10b981',danger:'#ef4444',warning:'#f59e0b',info:'#3b82f6'};
+        list.innerHTML = data.notifikasi.map(n => `
+            <a href="${n.link || '#'}" onclick="bacaNotif(${n.id},'user')" class="d-flex gap-3 px-3 py-3 text-decoration-none border-bottom ${
+                n.is_read == 0 ? 'bg-primary bg-opacity-5' : ''}" style="transition:background .2s;">
+                <div class="flex-shrink-0 rounded-circle d-flex align-items-center justify-content-center" style="width:36px;height:36px;background:${colors[n.tipe]}20;">
+                    <i class="fa-solid ${ {success:'fa-check',danger:'fa-xmark',warning:'fa-clock',info:'fa-info'}[n.tipe] } small" style="color:${colors[n.tipe]};"></i>
+                </div>
+                <div class="flex-grow-1 overflow-hidden">
+                    <div class="fw-semibold text-dark" style="font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${n.judul}</div>
+                    <div class="text-muted" style="font-size:.72rem;line-clamp:2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${n.pesan}</div>
+                    <div class="text-muted opacity-60" style="font-size:.65rem;margin-top:2px;">${new Date(n.created_at).toLocaleString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+                </div>
+                ${n.is_read == 0 ? '<span class="flex-shrink-0 rounded-circle bg-primary align-self-center" style="width:8px;height:8px;"></span>' : ''}
+            </a>`).join('');
+    } catch(e) { console.error(e); }
+}
+
+async function bacaNotif(id, tipe) {
+    await fetch(NOTIF_API_USER + '?aksi=baca&id=' + id);
+    if (tipe === 'user') muatNotifikasiUser();
+}
+
+async function bacaSemua(tipe) {
+    await fetch(NOTIF_API_USER + '?aksi=baca&id=0');
+    if (tipe === 'user') muatNotifikasiUser();
+}
+
+document.getElementById('notifBellUser').addEventListener('show.bs.dropdown', muatNotifikasiUser);
+muatNotifikasiUser(); // Muat badge saat load
+setInterval(muatNotifikasiUser, 60000); // Auto-refresh tiap 1 menit
+</script>
