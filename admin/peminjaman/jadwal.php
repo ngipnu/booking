@@ -15,7 +15,14 @@ $next_date = date('Y-m-d', strtotime($selected_date . ' +1 day'));
 
 $categories = $koneksi->query("SELECT * FROM kategori");
 $cat_id = $_GET['cat'] ?? 1;
-$hours = range(4, 21);
+
+// Ambil Sesi Waktu dari Database
+$waktu_res = $koneksi->query("SELECT * FROM waktu ORDER BY urutan ASC, jam_mulai ASC");
+$time_slots = [];
+while ($w = $waktu_res->fetch_assoc()) {
+    $time_slots[] = $w;
+}
+
 $assets = $koneksi->query("SELECT * FROM aset WHERE id_kategori = $cat_id ORDER BY nama_aset ASC");
 
 $bookings = [];
@@ -25,15 +32,17 @@ $booking_res = $koneksi->query("SELECT p.*, u.nama as user_real
                                 WHERE p.tgl_pinjam = '$selected_date' 
                                 AND p.status_pinjam IN ('menunggu', 'disetujui')");
 while ($b = $booking_res->fetch_assoc()) {
-    $start_h = (int)date('H', strtotime($b['jam_mulai']));
-    $end_h = (int)date('H', strtotime($b['jam_selesai']));
-    for ($h = $start_h; $h < $end_h; $h++) {
-        $bookings[$b['id_aset']][$h] = [
-            'id_p' => $b['id'],
-            'nama' => $b['nama_peminjam'] ?: $b['user_real'],
-            'unit' => $b['unit_peminjam'],
-            'status' => $b['status_pinjam']
-        ];
+    foreach ($time_slots as $slot) {
+        // Cek apakah booking ini melewati/berada di sesi waktu ini
+        // Kondisi overlap: (S_booking < E_slot) AND (E_booking > S_slot)
+        if (($b['jam_mulai'] < $slot['jam_selesai']) && ($b['jam_selesai'] > $slot['jam_mulai'])) {
+            $bookings[$b['id_aset']][$slot['id']] = [
+                'id_p' => $b['id'],
+                'nama' => $b['nama_peminjam'] ?: $b['user_real'],
+                'unit' => $b['unit_peminjam'],
+                'status' => $b['status_pinjam']
+            ];
+        }
     }
 }
 
@@ -93,8 +102,11 @@ include '../layouts/sidebar.php';
                 <thead>
                     <tr>
                         <th class="asset-col">Items</th>
-                        <?php foreach($hours as $h): ?>
-                        <th>Jam <?= $h ?></th>
+                        <?php foreach($time_slots as $slot): ?>
+                        <th>
+                            <div class="fw-bold"><?= htmlspecialchars($slot['nama_waktu']) ?></div>
+                            <div class="text-muted" style="font-size: 0.6rem;"><?= date('H:i', strtotime($slot['jam_mulai'])) ?>-<?= date('H:i', strtotime($slot['jam_selesai'])) ?></div>
+                        </th>
                         <?php endforeach; ?>
                     </tr>
                 </thead>
@@ -106,10 +118,10 @@ include '../layouts/sidebar.php';
                                 <div class="fw-bold text-dark small mb-0"><?= htmlspecialchars($row['nama_aset']) ?></div>
                                 <div class="text-muted" style="font-size: 0.6rem;"><?= htmlspecialchars($row['unit_pengguna'] ?: 'Umum') ?></div>
                             </td>
-                            <?php foreach($hours as $h): ?>
+                            <?php foreach($time_slots as $slot): ?>
                             <td class="slot-cell">
-                                <?php if (isset($bookings[$row['id']][$h])): 
-                                    $b = $bookings[$row['id']][$h];
+                                <?php if (isset($bookings[$row['id']][$slot['id']])): 
+                                    $b = $bookings[$row['id']][$slot['id']];
                                     $s_class = ($b['status'] == 'menunggu') ? 'slot-pending' : '';
                                 ?>
                                     <div class="slot-booked <?= $s_class ?>" onclick="location.href='index.php?search=<?= urlencode($b['nama']) ?>'" title="Klik untuk mengelola: <?= $b['nama'] ?>">

@@ -47,8 +47,17 @@ $koneksi->query("CREATE TABLE IF NOT EXISTS profil_lembaga (
     nama_lembaga VARCHAR(100) DEFAULT 'An Nadzir Islamic School',
     email_admin VARCHAR(100) DEFAULT 'admin@annadzir.sch.id',
     alamat TEXT,
-    telepon VARCHAR(20)
+    telepon VARCHAR(20),
+    sidebar_gradient VARCHAR(255) DEFAULT 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+    topbar_color VARCHAR(20) DEFAULT '#334155'
 )");
+
+// Migrasi Profil: Tambah kolom tema jika belum ada
+$check_p_theme = $koneksi->query("SHOW COLUMNS FROM profil_lembaga LIKE 'sidebar_gradient'");
+if ($check_p_theme->num_rows == 0) {
+    $koneksi->query("ALTER TABLE profil_lembaga ADD COLUMN sidebar_gradient VARCHAR(255) DEFAULT 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' AFTER telepon");
+    $koneksi->query("ALTER TABLE profil_lembaga ADD COLUMN topbar_color VARCHAR(20) DEFAULT '#334155' AFTER sidebar_gradient");
+}
 
 $cek_profil = $koneksi->query("SELECT * FROM profil_lembaga");
 if ($cek_profil->num_rows == 0) {
@@ -137,12 +146,43 @@ $koneksi->query("CREATE TABLE IF NOT EXISTS peminjaman (
     tgl_pengajuan DATETIME DEFAULT CURRENT_TIMESTAMP,
     tgl_pinjam DATE NOT NULL,
     tgl_kembali DATE NOT NULL,
+    jam_mulai TIME NULL,
+    jam_selesai TIME NULL,
     keperluan TEXT NOT NULL,
     status_pinjam ENUM('menunggu', 'disetujui', 'ditolak', 'selesai') DEFAULT 'menunggu',
     waktu_disetujui DATETIME NULL,
     FOREIGN KEY (id_user) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (id_aset) REFERENCES aset(id) ON DELETE CASCADE
 )");
+
+// Migrasi Peminjaman: Tambah jam_mulai & jam_selesai jika belum ada
+$check_p_jam = $koneksi->query("SHOW COLUMNS FROM peminjaman LIKE 'jam_mulai'");
+if ($check_p_jam->num_rows == 0) {
+    $koneksi->query("ALTER TABLE peminjaman ADD COLUMN jam_mulai TIME NULL AFTER tgl_kembali");
+    $koneksi->query("ALTER TABLE peminjaman ADD COLUMN jam_selesai TIME NULL AFTER jam_mulai");
+}
+
+// Tabel Waktu (Sesi/Jam Pelajaran)
+$koneksi->query("CREATE TABLE IF NOT EXISTS waktu (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nama_waktu VARCHAR(100) NOT NULL,
+    jam_mulai TIME NOT NULL,
+    jam_selesai TIME NOT NULL,
+    urutan INT DEFAULT 0
+)");
+
+// Isi waktu/jam pelajaran awal jika kosong
+$cek_waktu = $koneksi->query("SELECT * FROM waktu");
+if ($cek_waktu->num_rows == 0) {
+    $koneksi->query("INSERT INTO waktu (nama_waktu, jam_mulai, jam_selesai, urutan) VALUES 
+    ('Jam 1', '07:15:00', '08:00:00', 1),
+    ('Jam 2', '08:00:00', '08:45:00', 2),
+    ('Jam 3', '08:45:00', '09:30:00', 3),
+    ('Istirahat', '09:30:00', '10:00:00', 4),
+    ('Jam 4', '10:00:00', '10:45:00', 5),
+    ('Jam 5', '10:45:00', '11:30:00', 6),
+    ('Sesi Siang', '13:00:00', '15:00:00', 7)");
+}
 
 // Make sure Admin Exists
 $check_admin = $koneksi->query("SELECT * FROM users WHERE niy = 'admin'");

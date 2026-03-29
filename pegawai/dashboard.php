@@ -16,8 +16,12 @@ $next_date = date('Y-m-d', strtotime($selected_date . ' +1 day'));
 $categories = $koneksi->query("SELECT * FROM kategori");
 $cat_id = $_GET['cat'] ?? 1; // Default kategori pertama
 
-// Jam Operasional (4:00 - 22:00)
-$hours = range(4, 21); // 4-21 (slot 21-22)
+// Ambil Sesi Waktu dari Database
+$waktu_res = $koneksi->query("SELECT * FROM waktu ORDER BY urutan ASC, jam_mulai ASC");
+$time_slots = [];
+while ($w = $waktu_res->fetch_assoc()) {
+    $time_slots[] = $w;
+}
 
 // Ambil data peminjaman saya
 $user_id = $_SESSION['user_id'];
@@ -38,14 +42,15 @@ $booking_res = $koneksi->query("SELECT p.*, u.nama as user_real
                                 WHERE p.tgl_pinjam = '$selected_date' 
                                 AND p.status_pinjam IN ('menunggu', 'disetujui')");
 while ($b = $booking_res->fetch_assoc()) {
-    $start_h = (int)date('H', strtotime($b['jam_mulai']));
-    $end_h = (int)date('H', strtotime($b['jam_selesai']));
-    for ($h = $start_h; $h < $end_h; $h++) {
-        $bookings[$b['id_aset']][$h] = [
-            'nama' => $b['nama_peminjam'] ?: $b['user_real'],
-            'unit' => $b['unit_peminjam'],
-            'status' => $b['status_pinjam']
-        ];
+    foreach ($time_slots as $slot) {
+        // Cek overlap
+        if (($b['jam_mulai'] < $slot['jam_selesai']) && ($b['jam_selesai'] > $slot['jam_mulai'])) {
+            $bookings[$b['id_aset']][$slot['id']] = [
+                'nama' => $b['nama_peminjam'] ?: $b['user_real'],
+                'unit' => $b['unit_peminjam'],
+                'status' => $b['status_pinjam']
+            ];
+        }
     }
 }
 ?>
@@ -165,10 +170,10 @@ while ($b = $booking_res->fetch_assoc()) {
                         <thead>
                             <tr>
                                 <th class="asset-col text-start">Daftar Aset</th>
-                                <?php foreach($hours as $h): ?>
+                                <?php foreach($time_slots as $slot): ?>
                                 <th>
-                                    <div class="fw-bold fs-7">Jam <?= $h ?></div>
-                                    <div class="text-muted small" style="font-size: 0.6rem;"><?= sprintf('%02d:00', $h) ?></div>
+                                    <div class="fw-bold fs-7"><?= htmlspecialchars($slot['nama_waktu']) ?></div>
+                                    <div class="text-muted small" style="font-size: 0.6rem;"><?= date('H:i', strtotime($slot['jam_mulai'])) ?> - <?= date('H:i', strtotime($slot['jam_selesai'])) ?></div>
                                 </th>
                                 <?php endforeach; ?>
                             </tr>
@@ -183,10 +188,10 @@ while ($b = $booking_res->fetch_assoc()) {
                                         <div class="fw-bold text-primary small mb-0"><?= htmlspecialchars($row['nama_aset']) ?></div>
                                         <div class="text-muted" style="font-size: 0.6rem;"><?= htmlspecialchars($row['divisi_pembeli'] ?: 'LRC An Nadzir') ?></div>
                                     </td>
-                                    <?php foreach($hours as $h): ?>
+                                    <?php foreach($time_slots as $slot): ?>
                                     <td class="slot-cell">
-                                        <?php if (isset($bookings[$row['id']][$h])): 
-                                            $b = $bookings[$row['id']][$h];
+                                        <?php if (isset($bookings[$row['id']][$slot['id']])): 
+                                            $b = $bookings[$row['id']][$slot['id']];
                                             $status_class = ($b['status'] == 'menunggu') ? 'slot-pending' : '';
                                         ?>
                                             <div class="slot-booked <?= $status_class ?>" title="<?= $b['nama'] ?> (<?= $b['unit'] ?>)">
@@ -195,7 +200,7 @@ while ($b = $booking_res->fetch_assoc()) {
                                             </div>
                                         <?php else: ?>
                                             <div class="slot-free h-100" data-bs-toggle="modal" data-bs-target="#modalPinjam" 
-                                                onclick="setBookingInfo(<?= $row['id'] ?>, '<?= $row['nama_aset'] ?>', <?= $h ?>)"></div>
+                                                onclick="setBookingInfo(<?= $row['id'] ?>, '<?= $row['nama_aset'] ?>', '<?= date('H:i', strtotime($slot['jam_mulai'])) ?>', '<?= date('H:i', strtotime($slot['jam_selesai'])) ?>')"></div>
                                         <?php endif; ?>
                                     </td>
                                     <?php endforeach; ?>
@@ -300,13 +305,9 @@ while ($b = $booking_res->fetch_assoc()) {
 
     <script src="../assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script>
-        function setBookingInfo(id, nama, jam) {
+        function setBookingInfo(id, nama, start, end) {
             document.getElementById('modal_id_aset').value = id;
             document.getElementById('modal_nama_aset').value = nama;
-            
-            let start = jam.toString().padStart(2, '0') + ':00';
-            let end = (jam + 1).toString().padStart(2, '0') + ':00';
-            
             document.getElementById('modal_jam_mulai').value = start;
             document.getElementById('modal_jam_selesai').value = end;
         }

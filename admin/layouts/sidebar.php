@@ -29,6 +29,11 @@ $current_page = basename(dirname($_SERVER['PHP_SELF']));
             </a>
         </li>
         <li class="nav-item">
+            <a href="../waktu/index.php" class="nav-link sidebar-link <?= ($current_page == 'waktu') ? 'active' : '' ?>">
+                <i class="fa-solid fa-clock"></i> <span>Data Waktu</span>
+            </a>
+        </li>
+        <li class="nav-item">
             <a href="../peminjaman/index.php" class="nav-link sidebar-link <?= ($current_page == 'peminjaman' && basename($_SERVER['PHP_SELF']) == 'index.php') ? 'active' : '' ?>">
                 <i class="fa-solid fa-hand-holding-hand"></i> <span>Daftar Pinjam</span>
             </a>

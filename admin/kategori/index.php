@@ -69,44 +69,22 @@ include '../layouts/sidebar.php';
                                 </div>
                             </td>
                         </tr>
-
-                        <!-- Modal Edit -->
-                        <div class="modal fade" id="modalEdit<?= $kat['id'] ?>" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content glass-effect">
-                                    <div class="modal-header border-0 pb-0">
-                                        <h5 class="modal-title fw-bold">Edit Kategori</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <form action="proses.php" method="POST">
-                                        <input type="hidden" name="aksi" value="edit">
-                                        <input type="hidden" name="id" value="<?= $kat['id'] ?>">
-                                        <div class="modal-body">
-                                            <div class="mb-3 text-start">
-                                                <label class="form-label small fw-bold">Nama Kategori</label>
-                                                <input type="text" class="form-control" name="nama_kategori" value="<?= htmlspecialchars($kat['nama_kategori']) ?>" required>
-                                            </div>
-                                            <div class="mb-3 text-start">
-                                                <label class="form-label small fw-bold">Ikon (FontAwesome)</label>
-                                                <input type="text" class="form-control" name="icon" value="<?= htmlspecialchars($kat['icon']) ?>" required>
-                                                <div class="form-text small text-muted">Contoh: car, laptop, chair</div>
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer border-0">
-                                            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
-                                            <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold">Simpan Perubahan</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                        <?php endwhile; ?>
+                        <?php 
+                        $list_kategori_data[] = $kat;
+                        endwhile; ?>
                     <?php else: ?>
                         <tr><td colspan="3" class="text-center py-5 text-muted">Belum ada kategori yang ditambahkan.</td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>
         </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <div class="fab-container d-md-none">
+        <button class="fab-btn" data-bs-toggle="modal" data-bs-target="#modalTambahKat">
+            <i class="fa-solid fa-plus"></i>
+        </button>
     </div>
 </main>
 
@@ -137,5 +115,38 @@ include '../layouts/sidebar.php';
         </div>
     </div>
 </div>
+
+<?php if (isset($list_kategori_data)): foreach($list_kategori_data as $kat): ?>
+<!-- Modal Edit -->
+<div class="modal fade" id="modalEdit<?= $kat['id'] ?>" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-effect">
+            <div class="modal-header border-0 pb-0 px-4 pt-4">
+                <h5 class="modal-title fw-bold">Edit Kategori</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="proses.php" method="POST">
+                <input type="hidden" name="aksi" value="edit">
+                <input type="hidden" name="id" value="<?= $kat['id'] ?>">
+                <div class="modal-body px-4">
+                    <div class="mb-3 text-start">
+                        <label class="form-label small fw-bold">Nama Kategori</label>
+                        <input type="text" class="form-control" name="nama_kategori" value="<?= htmlspecialchars($kat['nama_kategori']) ?>" required>
+                    </div>
+                    <div class="mb-3 text-start">
+                        <label class="form-label small fw-bold">Ikon (FontAwesome)</label>
+                        <input type="text" class="form-control" name="icon" value="<?= htmlspecialchars($kat['icon']) ?>" required>
+                        <div class="form-text small text-muted">Contoh: car, laptop, chair</div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<?php endforeach; endif; ?>
 
 <?php include '../layouts/footer.php'; ?>

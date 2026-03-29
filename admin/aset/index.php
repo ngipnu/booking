@@ -9,10 +9,34 @@ if (!isset($_SESSION['login']) || $_SESSION['role'] !== 'admin') {
     exit;
 }
 
-// Ambil data aset dengan JOIN ke kategori
+// --- Logic Filter ---
+$filter_search = $_GET['search'] ?? '';
+$filter_kategori = $_GET['kategori'] ?? '';
+$filter_unit = $_GET['unit'] ?? '';
+$filter_kondisi = $_GET['kondisi'] ?? '';
+
+$where_clauses = [];
+if (!empty($filter_search)) {
+    $search = $koneksi->real_escape_string($filter_search);
+    $where_clauses[] = "(a.nama_aset LIKE '%$search%' OR a.kode_aset LIKE '%$search%' OR a.merk LIKE '%$search%')";
+}
+if (!empty($filter_kategori)) {
+    $where_clauses[] = "a.id_kategori = '" . $koneksi->real_escape_string($filter_kategori) . "'";
+}
+if (!empty($filter_unit)) {
+    $where_clauses[] = "a.unit_pengguna = '" . $koneksi->real_escape_string($filter_unit) . "'";
+}
+if (!empty($filter_kondisi)) {
+    $where_clauses[] = "a.kondisi = '" . $koneksi->real_escape_string($filter_kondisi) . "'";
+}
+
+$where_sql = count($where_clauses) > 0 ? "WHERE " . implode(" AND ", $where_clauses) : "";
+
+// Ambil data aset dengan JOIN ke kategori + Filter
 $query_aset = "SELECT a.*, k.nama_kategori, k.icon as kat_icon 
                FROM aset a 
                LEFT JOIN kategori k ON a.id_kategori = k.id 
+               $where_sql
                ORDER BY a.id DESC";
 $kumpulan_aset = $koneksi->query($query_aset);
 
@@ -31,6 +55,186 @@ include '../layouts/header.php';
 include '../layouts/sidebar.php';
 ?>
 
+<style>
+/* --- BASE TABLE STYLES --- */
+.table-responsive {
+    transition: all 0.4s ease;
+    overflow: visible !important;
+}
+
+/* --- LIST VIEW (Default/Flat) --- */
+.view-list .table tbody tr {
+    transition: background 0.2s ease !important;
+    background: transparent;
+    border-bottom: 1px solid rgba(0,0,0,0.03);
+}
+.view-list .table tbody tr:hover {
+    background: #ffffff !important;
+    transform: none !important; /* Flat row, no zoom for list */
+    box-shadow: none !important; /* No card shadow for list */
+    z-index: 1;
+}
+.view-list .table tbody tr:hover td {
+    background: #ffffff !important;
+}
+/* Remove container border/shadow in list mode for a flatter look if desired */
+.view-list.glass-card {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    backdrop-filter: none !important;
+}
+
+/* --- GRID VIEW LOGIC (Card & Zoom) --- */
+.view-grid .table thead { display: none; }
+.view-grid .table tbody {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    padding: 15px;
+}
+.view-grid .table tbody tr {
+    display: flex;
+    flex-direction: column;
+    background: #ffffff !important;
+    border: 1px solid rgba(0,0,0,0.05);
+    border-radius: 20px;
+    padding: 15px !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    height: 100%;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.view-grid .table tbody tr:hover {
+    transform: scale(1.02) translateY(-5px) !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08) !important;
+    z-index: 10;
+}
+.view-grid .table tbody td {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start !important;
+    border: none !important;
+    padding: 6px 0 !important;
+    width: 100% !important;
+    text-align: left !important;
+    background: transparent !important;
+}
+.view-grid td[data-label="Identitas"] { border-bottom: 1px solid rgba(0,0,0,0.05) !important; margin-bottom: 10px; padding-bottom: 10px !important; }
+.view-grid td[data-label="Tindakan"] { margin-top: auto; padding-top: 15px !important; border-top: 1px dashed rgba(0,0,0,0.1) !important; flex-direction: row !important; }
+
+/* Grid Labels */
+.view-grid td:not([data-label="Identitas"]):not([data-label="Tindakan"])::before {
+    content: attr(data-label);
+    font-size: 0.65rem;
+    color: #94a3b8;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+}
+
+/* --- MOBILE LOGIC (RESPONSIVE CARD) --- */
+@media (max-width: 768px) {
+    /* --- Grid View on Mobile (3 Columns Gallery) --- */
+    .table-responsive:not(.view-list) .table thead { display: none; }
+    .table-responsive:not(.view-list) .table tbody {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        padding: 10px;
+    }
+    .table-responsive:not(.view-list) .table tbody tr {
+        display: flex;
+        flex-direction: column;
+        background: #ffffff !important;
+        border: 1px solid rgba(0,0,0,0.05);
+        border-radius: 12px;
+        padding: 8px !important;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        height: 100%;
+        transition: transform 0.2s ease;
+        text-align: center;
+        align-items: center;
+    }
+    .table-responsive:not(.view-list) .table tbody td {
+        display: flex;
+        flex-direction: column;
+        border: none !important;
+        padding: 2px 0 !important;
+        width: 100% !important;
+        align-items: center !important;
+        text-align: center !important;
+    }
+    
+    /* Shrinking Content for 3 Col */
+    .table-responsive:not(.view-list) .bg-primary-soft { 
+        width: 32px !important; 
+        height: 32px !important; 
+        margin-bottom: 5px;
+    }
+    .table-responsive:not(.view-list) .bg-primary-soft i { font-size: 0.8rem !important; }
+    .table-responsive:not(.view-list) .item-name { font-size: 0.65rem !important; line-height: 1.2; }
+    .table-responsive:not(.view-list) .text-muted.small { font-size: 0.55rem !important; }
+    
+    .table-responsive:not(.view-list) td[data-label="Identitas"] { border-bottom: none !important; margin-bottom: 0; padding-bottom: 0 !important; }
+    .table-responsive:not(.view-list) td[data-label="Lokasi"], 
+    .table-responsive:not(.view-list) td[data-label="Kondisi"], 
+    .table-responsive:not(.view-list) td[data-label="Anggaran"] { font-size: 0.55rem !important; }
+
+    /* Only show Name, Badge and specific data in 3-col to avoid clutter */
+    .table-responsive:not(.view-list) td::before { display: none !important; }
+    .table-responsive:not(.view-list) .badge { font-size: 0.5rem !important; padding: 2px 4px !important; }
+
+    /* --- Compact List View on Mobile (100% Width) --- */
+    .view-list .table thead { 
+        display: table-header-group !important; 
+    }
+    .view-list .table thead th {
+        font-size: 0.6rem !important;
+        padding: 10px 5px !important;
+        letter-spacing: 0;
+        text-transform: capitalize;
+    }
+    .view-list .table tbody tr {
+        display: table-row !important;
+        background: transparent !important;
+        border-bottom: 1px solid rgba(0,0,0,0.05) !important;
+    }
+    .view-list .table tbody td { 
+        display: table-cell !important;
+        padding: 10px 5px !important; 
+        font-size: 0.7rem !important;
+        border: none !important;
+        width: auto !important;
+        background: transparent !important;
+    }
+    .view-list .table { 
+        width: 100% !important; 
+        table-layout: fixed; 
+        margin: 0 !important;
+    }
+    /* Column specifically */
+    .view-list .table th:nth-child(1), .view-list .table td:nth-child(1) { width: 40%; }
+    .view-list .table th:nth-child(2), .view-list .table td:nth-child(2) { width: 25%; }
+    .view-list .table th:nth-child(3), .view-list .table td:nth-child(3) { width: 15%; text-align: center; }
+    .view-list .table th:nth-child(4), .view-list .table td:nth-child(4) { width: 20%; text-align: right !important; }
+
+    /* Hide redundant labels in list mode to save space */
+    .view-list .table td::before { display: none !important; }
+}
+
+.cursor-pointer { cursor: pointer; }
+.item-name { transition: color 0.2s; }
+.view-list .table tbody tr:hover .item-name { color: var(--primary-color) !important; }
+
+/* Filter Styling */
+.filter-panel {
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+}
+</style>
+
 <main class="main-content">
     <?php include '../layouts/topbar.php'; ?>
 
@@ -38,18 +242,74 @@ include '../layouts/sidebar.php';
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
             <div>
                 <h4 class="font-heading fw-bold text-dark mb-1">Manajemen Inventaris Detail</h4>
-                <p class="text-muted small mb-0">Pelacakan aset, kategori dinamis, dan masa berlaku garansi.</p>
+                <p class="text-muted small mb-0">Pelacakan aset, kategori dinamis, dan garansi.</p>
             </div>
-            <div class="d-flex gap-2">
-                <button class="btn btn-outline-primary rounded-pill px-3 shadow-sm fw-medium d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalImport">
-                    <i class="fa-solid fa-file-import"></i> <span class="d-none d-sm-inline">Import Excel</span>
+            <div class="d-flex flex-wrap gap-2 header-actions">
+                <div class="btn-group shadow-sm rounded-pill overflow-hidden me-md-2" role="group">
+                    <button type="button" class="btn btn-white border-0 px-3 py-2 btn-view-toggle active" id="btn-list-view" onclick="toggleView('list')">
+                        <i class="fa-solid fa-list"></i>
+                    </button>
+                    <button type="button" class="btn btn-white border-0 px-3 py-2 btn-view-toggle" id="btn-grid-view" onclick="toggleView('grid')">
+                        <i class="fa-solid fa-grip-vertical"></i>
+                    </button>
+                </div>
+                <button class="btn btn-outline-primary rounded-pill px-3 shadow-sm fw-medium d-flex align-items-center gap-2" data-bs-toggle="collapse" data-bs-target="#collapseFilter">
+                    <i class="fa-solid fa-filter"></i> <span>Filter</span>
                 </button>
-                <a href="../kategori/index.php" class="btn btn-outline-primary rounded-pill px-3 shadow-sm fw-medium d-flex align-items-center gap-2">
-                    <i class="fa-solid fa-tags"></i> <span class="d-none d-sm-inline">Kelola Kategori</span>
-                </a>
-                <button class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalTambahAset">
+                <button class="btn btn-outline-primary rounded-pill px-3 shadow-sm fw-medium d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalImport">
+                    <i class="fa-solid fa-file-import"></i> <span class="d-md-inline">Import</span>
+                </button>
+                <button class="btn btn-primary btn-primary-add rounded-pill px-4 shadow-sm fw-bold d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalTambahAset">
                     <i class="fa-solid fa-plus-circle"></i> <span>Tambah Aset</span>
                 </button>
+            </div>
+        </div>
+
+        <!-- Filter Panel -->
+        <div class="collapse <?= ($filter_search || $filter_kategori || $filter_unit || $filter_kondisi) ? 'show' : '' ?> mb-4" id="collapseFilter">
+            <div class="filter-panel p-4 shadow-sm">
+                <form action="" method="GET" class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-muted">Cari Nama/Kode/Merk</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-search opacity-50"></i></span>
+                            <input type="text" class="form-control border-start-0" name="search" value="<?= htmlspecialchars($filter_search) ?>" placeholder="Masukkan kata kunci...">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold text-muted">Kategori</label>
+                        <select class="form-select form-select-sm" name="kategori">
+                            <option value="">Semua Kategori</option>
+                            <?php foreach($kategori_list as $kat): ?>
+                                <option value="<?= $kat['id'] ?>" <?= $filter_kategori == $kat['id'] ? 'selected' : '' ?>><?= $kat['nama_kategori'] ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold text-muted">Unit Pengguna</label>
+                        <select class="form-select form-select-sm" name="unit">
+                            <option value="">Semua Unit</option>
+                            <?php 
+                            $unit_unik->data_seek(0);
+                            while($u = $unit_unik->fetch_assoc()): ?>
+                                <option value="<?= htmlspecialchars($u['unit_pengguna']) ?>" <?= $filter_unit == $u['unit_pengguna'] ? 'selected' : '' ?>><?= $u['unit_pengguna'] ?></option>
+                            <?php endwhile; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold text-muted">Kondisi</label>
+                        <select class="form-select form-select-sm" name="kondisi">
+                            <option value="">Semua Kondisi</option>
+                            <option value="baik" <?= $filter_kondisi == 'baik' ? 'selected' : '' ?>>✅ Baik</option>
+                            <option value="rusak_ringan" <?= $filter_kondisi == 'rusak_ringan' ? 'selected' : '' ?>>⚠️ Rusak Ringan</option>
+                            <option value="rusak_berat" <?= $filter_kondisi == 'rusak_berat' ? 'selected' : '' ?>>❌ Rusak Berat</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end gap-2">
+                        <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4 fw-bold">Terapkan</button>
+                        <a href="index.php" class="btn btn-light btn-sm rounded-pill px-3">Reset</a>
+                    </div>
+                </form>
             </div>
         </div>
 
@@ -60,43 +320,43 @@ include '../layouts/sidebar.php';
             </div>
         <?php endif; ?>
 
-        <!-- Inventory Table (Clean List Style) -->
-        <div class="table-responsive glass-card shadow-sm border border-white-50">
+        <!-- Inventory List -->
+        <div id="table-container" class="table-responsive glass-card shadow-sm border border-white-50 p-2 p-md-0">
             <table class="table table-hover align-middle mb-0">
                 <thead>
                     <tr>
-                        <th class="ps-4">Item & Spesifikasi</th>
-                        <th>Unit / Lokasi</th>
-                        <th class="text-center">Kondisi / Garansi</th>
-                        <th class="text-end">Valuasi & Thn Anggaran</th>
+                        <th class="ps-4">Nama Inventaris</th>
+                        <th>Lokasi</th>
+                        <th class="text-center">Kondisi</th>
+                        <th>Nilai</th>
                         <th class="text-end pe-4">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if ($kumpulan_aset && $kumpulan_aset->num_rows > 0): ?>
                         <?php while ($row = $kumpulan_aset->fetch_assoc()): ?>
-                        <tr>
-                            <td class="px-4">
-                                <div class="d-flex align-items-center gap-3">
+                        <tr class="cursor-pointer">
+                            <td class="px-4" data-label="Identitas" onclick="window.location='detail.php?id=<?= $row['id'] ?>'">
+                                <div class="text-decoration-none d-flex align-items-center gap-3 group-item">
                                     <div class="bg-primary-soft text-primary rounded-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px; flex-shrink: 0;">
                                         <i class="fa-solid fa-<?= $row['kat_icon'] ? $row['kat_icon'] : 'box' ?> fs-5"></i>
                                     </div>
                                     <div>
-                                        <div class="fw-bold text-dark lh-1 mb-1"><?= htmlspecialchars($row['nama_aset']) ?></div>
+                                        <div class="fw-bold text-dark lh-1 mb-1 item-name"><?= htmlspecialchars($row['nama_aset']) ?></div>
                                         <div class="text-muted small">
                                             <span class="badge bg-light text-dark border-0 fw-normal px-0 me-2"><?= htmlspecialchars($row['kode_aset']) ?></span>
-                                            <span class="opacity-75"><?= htmlspecialchars($row['merk']) ?> <?= htmlspecialchars($row['warna']) ?></span>
+                                            <span class="opacity-75"><?= htmlspecialchars($row['merk'] . ' ' . $row['warna']) ?></span>
                                         </div>
                                     </div>
                                 </div>
                             </td>
-                            <td>
+                            <td data-label="Lokasi">
                                 <div class="lh-sm">
                                     <div class="fw-medium text-dark small mb-1"><?= htmlspecialchars($row['unit_pengguna']) ?></div>
                                     <div class="text-muted" style="font-size: 0.75rem;"><i class="fa-solid fa-location-dot me-1 opacity-50"></i> <?= htmlspecialchars($row['lokasi_simpan'] ? $row['lokasi_simpan'] : '-') ?></div>
                                 </div>
                             </td>
-                            <td class="text-center">
+                            <td class="text-center" data-label="Kondisi">
                                 <div class="mb-1">
                                     <?php 
                                         $cond_class = 'bg-success';
@@ -115,139 +375,24 @@ include '../layouts/sidebar.php';
                                     </span>
                                 <?php endif; ?>
                             </td>
-                            <td class="text-end">
+                            <td data-label="Anggaran">
                                 <div class="fw-bold text-dark small">Rp <?= number_format($row['harga_beli'], 0, ',', '.') ?></div>
                                 <div class="text-muted" style="font-size: 0.7rem;">
                                     Tgl: <?= date('d/m/y', strtotime($row['tgl_beli'])) ?> 
                                     <span class="badge bg-light text-muted border py-0 px-1 ms-1"><?= $row['tahun_anggaran'] ?></span>
                                 </div>
                             </td>
-                            <td class="px-4 text-end">
-                                <div class="d-flex justify-content-end gap-2">
-                                    <button class="btn btn-sm btn-white border shadow-sm rounded-3" data-bs-toggle="modal" data-bs-target="#modalEdit<?= $row['id'] ?>"><i class="fa-solid fa-pen-to-square text-primary"></i></button>
-                                    <a href="proses.php?aksi=hapus&id=<?= $row['id'] ?>" class="btn btn-sm btn-white border shadow-sm rounded-3 text-danger" onclick="return confirm('Hapus aset ini?');"><i class="fa-solid fa-trash"></i></a>
+                            <td class="text-end pe-4">
+                                <div class="btn-group shadow-sm rounded-pill overflow-hidden border">
+                                    <button class="btn btn-sm btn-white px-3" data-bs-toggle="modal" data-bs-target="#modalEditAset<?= $row['id'] ?>"><i class="fa-solid fa-pen-to-square text-muted"></i></button>
+                                    <a href="proses.php?aksi=hapus&id=<?= $row['id'] ?>" class="btn btn-sm btn-white px-3" onclick="return confirm('Hapus aset ini?')"><i class="fa-solid fa-trash text-danger"></i></a>
                                 </div>
                             </td>
                         </tr>
-
-                        <!-- Modal Edit -->
-                        <div class="modal fade" id="modalEdit<?= $row['id'] ?>" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered modal-lg">
-                                <div class="modal-content glass-effect">
-                                    <div class="modal-header border-0 px-4 pt-4">
-                                        <h5 class="modal-title font-heading fw-bold">Update Inventaris: <?= htmlspecialchars($row['kode_aset']) ?></h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <form action="proses.php" method="POST">
-                                        <input type="hidden" name="aksi" value="edit">
-                                        <input type="hidden" name="id" value="<?= $row['id'] ?>">
-                                        <div class="modal-body px-4 py-3">
-                                            <div class="row g-3 text-start">
-                                                <div class="col-md-6">
-                                                    <label class="form-label small fw-bold text-muted">Nama Barang</label>
-                                                    <input type="text" class="form-control" name="nama_aset" value="<?= htmlspecialchars($row['nama_aset']) ?>" required>
-                                                </div>
-                                                <div class="col-md-3">
-                                                    <label class="form-label small fw-bold text-muted">Merk</label>
-                                                    <input type="text" class="form-control" name="merk" value="<?= htmlspecialchars($row['merk']) ?>">
-                                                </div>
-                                                <div class="col-md-3">
-                                                    <label class="form-label small fw-bold text-muted">Warna</label>
-                                                    <input type="text" class="form-control" name="warna" value="<?= htmlspecialchars($row['warna']) ?>">
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <label class="form-label small fw-bold text-muted">Kategori</label>
-                                                    <select class="form-select" name="id_kategori">
-                                                        <?php foreach($kategori_list as $kat): ?>
-                                                            <option value="<?= $kat['id'] ?>" <?= $row['id_kategori']==$kat['id']?'selected':'' ?>><?= $kat['nama_kategori'] ?></option>
-                                                        <?php endforeach; ?>
-                                                    </select>
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <label class="form-label small fw-bold text-muted">Unit Pengguna (Pemegang)</label>
-                                                    <input type="text" class="form-control" name="unit_pengguna" value="<?= htmlspecialchars($row['unit_pengguna']) ?>" list="list-unit">
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <label class="form-label small fw-bold text-muted">Lokasi / Ruangan</label>
-                                                    <input type="text" class="form-control" name="lokasi_simpan" value="<?= htmlspecialchars($row['lokasi_simpan']) ?>" list="list-lokasi">
-                                                </div>
-                                                
-                                                <div class="col-12"><hr class="my-1 opacity-5"></div>
-                                                
-                                                <div class="col-md-4">
-                                                    <label class="form-label small fw-bold text-muted">Harga Beli (Rp)</label>
-                                                    <input type="number" class="form-control" name="harga_beli" value="<?= (int)$row['harga_beli'] ?>">
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <label class="form-label small fw-bold text-muted">Tanggal Perolehan</label>
-                                                    <input type="date" class="form-control" id="edit_tgl_beli_<?= $row['id'] ?>" name="tgl_beli" value="<?= $row['tgl_beli'] ?>">
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <label class="form-label small fw-bold text-muted">Kondisi Saat Ini</label>
-                                                    <select class="form-select" name="kondisi">
-                                                        <option value="baik" <?= $row['kondisi']=='baik'?'selected':'' ?>>✅ Baik</option>
-                                                        <option value="rusak_ringan" <?= $row['kondisi']=='rusak_ringan'?'selected':'' ?>>⚠️ Rusak Ringan</option>
-                                                        <option value="rusak_berat" <?= $row['kondisi']=='rusak_berat'?'selected':'' ?>>❌ Rusak Berat</option>
-                                                    </select>
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <label class="form-label small fw-bold text-muted">Ada Garansi?</label>
-                                                    <select class="form-select" name="ada_garansi" id="edit_ada_garansi_<?= $row['id'] ?>">
-                                                        <option value="Y" <?= $row['ada_garansi']=='Y'?'selected':'' ?>>Ya, Bergaransi</option>
-                                                        <option value="N" <?= $row['ada_garansi']=='N'?'selected':'' ?>>Tidak Ada</option>
-                                                    </select>
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <label class="form-label small fw-bold text-muted">Cepat Atur Garansi</label>
-                                                    <select class="form-select select-duration" data-target="edit_garansi_sampai_<?= $row['id'] ?>" data-source="edit_tgl_beli_<?= $row['id'] ?>">
-                                                        <option value="">Pilih Durasi</option>
-                                                        <option value="6">6 Bulan</option>
-                                                        <option value="12">1 Tahun</option>
-                                                        <option value="24">2 Tahun</option>
-                                                        <option value="36">3 Tahun</option>
-                                                        <option value="60">5 Tahun</option>
-                                                    </select>
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <label class="form-label small fw-bold text-muted">Garansi Sampai</label>
-                                                    <input type="date" class="form-control" name="garansi_sampai" id="edit_garansi_sampai_<?= $row['id'] ?>" value="<?= $row['garansi_sampai'] ?>">
-                                                </div>
-
-                                                <div class="col-12"><hr class="my-1 opacity-5"></div>
-
-                                                <div class="col-md-4">
-                                                    <label class="form-label small fw-bold text-muted">Bisa Dipinjam?</label>
-                                                    <select class="form-select" name="bisa_dipinjam">
-                                                        <option value="Y" <?= $row['bisa_dipinjam']=='Y'?'selected':'' ?>>🌐 Bisa Dipinjam</option>
-                                                        <option value="N" <?= $row['bisa_dipinjam']=='N'?'selected':'' ?>>🔒 Internal Saja</option>
-                                                    </select>
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <label class="form-label small fw-bold text-muted">Sumber Anggaran</label>
-                                                    <input type="text" class="form-control" name="divisi_pembeli" value="<?= htmlspecialchars($row['divisi_pembeli'] ?? '') ?>" placeholder="e.g. Divisi LRC">
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <label class="form-label small fw-bold text-muted">Tahun Anggaran</label>
-                                                    <input type="text" class="form-control" name="tahun_anggaran" value="<?= $row['tahun_anggaran'] ?>" placeholder="YYYY">
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <label class="form-label small fw-bold text-muted">Toko Pembelian</label>
-                                                    <input type="text" class="form-control" name="toko_pembelian" value="<?= htmlspecialchars($row['toko_pembelian']) ?>">
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <label class="form-label small fw-bold text-muted">Kota Toko</label>
-                                                    <input type="text" class="form-control" name="kota_pembelian" value="<?= htmlspecialchars($row['kota_pembelian'] ?? '') ?>">
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer border-0 px-4 pb-4">
-                                            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
-                                            <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold">Simpan Perubahan</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
+                        <?php 
+                        // Simpan data untuk modal diluar loop agar stacking context benar
+                        $list_data_aset[] = $row;
+                        ?>
                         <?php endwhile; ?>
                     <?php else: ?>
                         <tr>
@@ -260,6 +405,13 @@ include '../layouts/sidebar.php';
                 </tbody>
             </table>
         </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <div class="fab-container d-md-none">
+        <button class="fab-btn" data-bs-toggle="modal" data-bs-target="#modalTambahAset">
+            <i class="fa-solid fa-plus"></i>
+        </button>
     </div>
 </main>
 
@@ -444,7 +596,114 @@ include '../layouts/sidebar.php';
 </datalist>
 
 <script>
+function toggleView(view) {
+    const container = document.getElementById('table-container');
+    const btnList = document.getElementById('btn-list-view');
+    const btnGrid = document.getElementById('btn-grid-view');
+    
+    if (view === 'grid') {
+        container.classList.add('view-grid');
+        container.classList.remove('view-list');
+        btnGrid.classList.add('active', 'btn-primary');
+        btnGrid.classList.remove('btn-white');
+        btnList.classList.remove('active', 'btn-primary');
+        btnList.classList.add('btn-white');
+        localStorage.setItem('inventory-view', 'grid');
+    } else {
+        container.classList.remove('view-grid');
+        container.classList.add('view-list');
+        btnList.classList.add('active', 'btn-primary');
+        btnList.classList.remove('btn-white');
+        btnGrid.classList.remove('active', 'btn-primary');
+        btnGrid.classList.add('btn-white');
+        localStorage.setItem('inventory-view', 'list');
+    }
+}
+
+<?php if (isset($list_data_aset)): foreach($list_data_aset as $row): ?>
+<!-- Modal Edit Aset -->
+<div class="modal fade" id="modalEditAset<?= $row['id'] ?>" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content glass-effect">
+            <div class="modal-header border-0 px-4 pt-4">
+                <h5 class="modal-title font-heading fw-bold">Edit Aset: <?= htmlspecialchars($row['nama_aset']) ?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="proses.php" method="POST">
+                <input type="hidden" name="aksi" value="edit">
+                <input type="hidden" name="id" value="<?= $row['id'] ?>">
+                <div class="modal-body px-4 py-3 text-start">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold text-muted">Kode Inventaris</label>
+                            <input type="text" class="form-control" name="kode_aset" value="<?= $row['kode_aset'] ?>" required>
+                        </div>
+                        <div class="col-md-9">
+                            <label class="form-label small fw-bold text-muted">Nama Barang / Ruangan</label>
+                            <input type="text" class="form-control" name="nama_aset" value="<?= htmlspecialchars($row['nama_aset']) ?>" required>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted">Kategori</label>
+                            <select class="form-select" name="id_kategori">
+                                <?php foreach($kategori_list as $kat): ?>
+                                    <option value="<?= $kat['id'] ?>" <?= $row['id_kategori'] == $kat['id'] ? 'selected' : '' ?>><?= $kat['nama_kategori'] ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted">Merk</label>
+                            <input type="text" class="form-control" name="merk" value="<?= htmlspecialchars($row['merk']) ?>">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted">Warna</label>
+                            <input type="text" class="form-control" name="warna" value="<?= htmlspecialchars($row['warna']) ?>">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted">Unit Pengguna</label>
+                            <input type="text" class="form-control" name="unit_pengguna" value="<?= htmlspecialchars($row['unit_pengguna']) ?>" list="list-unit">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted">Lokasi Simpan</label>
+                            <input type="text" class="form-control" name="lokasi_simpan" value="<?= htmlspecialchars($row['lokasi_simpan']) ?>" list="list-lokasi">
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted">Kondisi</label>
+                            <select class="form-select" name="kondisi">
+                                <option value="baik" <?= $row['kondisi'] == 'baik' ? 'selected' : '' ?>>✅ Baik</option>
+                                <option value="rusak_ringan" <?= $row['kondisi'] == 'rusak_ringan' ? 'selected' : '' ?>>⚠️ Rusak Ringan</option>
+                                <option value="rusak_berat" <?= $row['kondisi'] == 'rusak_berat' ? 'selected' : '' ?>>❌ Rusak Berat</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted">Harga Beli</label>
+                            <input type="number" class="form-control" name="harga_beli" value="<?= (int)$row['harga_beli'] ?>">
+                        </div>
+                        <div class="col-md-4">
+                                <label class="form-label small fw-bold text-muted">Ada Garansi?</label>
+                                <select class="form-select" name="ada_garansi" id="edit_ada_garansi_<?= $row['id'] ?>">
+                                    <option value="N" <?= $row['ada_garansi'] == 'N' ? 'selected' : '' ?>>Tidak Ada</option>
+                                    <option value="Y" <?= $row['ada_garansi'] == 'Y' ? 'selected' : '' ?>>Ya, Bergaransi</option>
+                                </select>
+                            </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold">Update Aset</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<?php endforeach; endif; ?>
+
 document.addEventListener('DOMContentLoaded', function() {
+    // Restore View Preference
+    const savedView = localStorage.getItem('inventory-view');
+    if (savedView) toggleView(savedView);
     // Check for showModal param
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('showModal') === 'tambah') {

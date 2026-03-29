@@ -60,7 +60,10 @@ include '../layouts/sidebar.php';
                                 <div class="badge bg-light text-muted border py-0 px-2" style="font-size: 0.65rem;"><?= $row['kode_aset'] ?></div>
                             </td>
                             <td>
-                                <div class="small text-dark"><?= date('d/m/Y', strtotime($row['tgl_pinjam'])) ?> - <?= date('d/m/Y', strtotime($row['tgl_kembali'])) ?></div>
+                                <div class="small text-dark"><?= date('d/m/Y', strtotime($row['tgl_pinjam'])) ?></div>
+                                <div class="badge bg-primary-soft text-primary border-0" style="font-size: 0.7rem;">
+                                    <?= substr($row['jam_mulai'], 0, 5) ?> - <?= substr($row['jam_selesai'], 0, 5) ?>
+                                </div>
                                 <div class="text-muted" style="font-size: 0.65rem;">Diajukan: <?= date('d/m/Y H:i', strtotime($row['tgl_pengajuan'])) ?></div>
                             </td>
                             <td class="text-center">
