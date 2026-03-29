@@ -95,7 +95,7 @@ include 'layouts/header.php';
                             <p class="opacity-90 mb-0">Anda login sebagai unit <b><?= htmlspecialchars($unit_pemakai) ?></b>. Cek ketersediaan dan ajukan peminjaman dengan mudah.</p>
                         </div>
                         <div class="col-md-5 d-none d-md-block text-end">
-                            <img src="https://cdni.iconscout.com/illustration/premium/thumb/checking-office-inventory-illustration-download-in-svg-png-gif-formats--inventory-management-taking-stock-warehouse-operations-pack-people-illustrations-5219213.png" alt="Hero" class="img-fluid" style="max-height: 200px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.2));">
+                        <img src="../assets/images/hero_inventory.png" alt="Inventory Management" class="img-fluid" style="max-height: 200px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.2));">
                         </div>
                     </div>
                 </div>
