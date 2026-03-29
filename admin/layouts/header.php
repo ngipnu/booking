@@ -1,6 +1,11 @@
 <?php 
 // admin/layouts/header.php
 $profil_tema = $koneksi->query("SELECT sidebar_gradient, topbar_color FROM profil_lembaga LIMIT 1")->fetch_assoc();
+
+// Ekstrak warna utama dari gradient untuk aksen UI lainnya
+$grad = $profil_tema['sidebar_gradient'];
+preg_match('/(#[a-f0-9]{3,6}|rgba?\([^)]+\))/i', $grad, $matches);
+$primary_color = isset($matches[0]) ? $matches[0] : '#3b82f6';
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -21,7 +26,11 @@ $profil_tema = $koneksi->query("SELECT sidebar_gradient, topbar_color FROM profi
         :root {
             --sidebar-gradient: <?= $profil_tema['sidebar_gradient'] ?>;
             --topbar-text: <?= $profil_tema['topbar_color'] ?>;
+            --primary-color: <?= $primary_color ?>;
+            --primary-gradient: <?= $profil_tema['sidebar_gradient'] ?>;
         }
+        
+        /* Tema Sidebar */
         .offcanvas-sidebar {
             background: var(--sidebar-gradient) !important;
         }
@@ -38,9 +47,35 @@ $profil_tema = $koneksi->query("SELECT sidebar_gradient, topbar_color FROM profi
         .offcanvas-sidebar .nav-link.sidebar-link.active {
             background: white !important;
             color: var(--primary-color) !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
-        .topbar h5, .topbar .topbar-btn i, .topbar .profile-link span, .topbar .profile-link .text-dark {
+
+        /* Tema Topbar */
+        .topbar h5, .topbar .topbar-btn i, .topbar span.text-dark {
             color: var(--topbar-text) !important;
+        }
+        
+        /* Tema Aksen Global */
+        .btn-primary {
+            background: var(--primary-gradient) !important;
+            border: none !important;
+        }
+        .text-primary {
+            color: var(--primary-color) !important;
+        }
+        .bg-primary-soft {
+            background-color: <?= $primary_color ?>20 !important; /* Opacity 20% hex hack (simplistic) */
+        }
+        
+        /* Hover Table & List */
+        .table tbody tr:hover {
+            background: rgba(0,0,0,0.01) !important;
+            border-left: 3px solid var(--primary-color);
+        }
+        
+        /* Floating Action Button */
+        .fab-btn {
+            background: var(--primary-gradient) !important;
         }
     </style>
 </head>
