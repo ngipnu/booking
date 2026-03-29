@@ -12,7 +12,7 @@ $primary_color = isset($matches[0]) ? $matches[0] : '#3b82f6';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $page_title ?? 'User Dashboard' ?> | Sarpras An Nadzir</title>
+    <title><?= $page_title ?? 'User Dashboard' ?> | An Nadzir Learning Center</title>
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="../assets/logo/logo_round.png?v=2">
     <!-- Bootstrap 5 -->
@@ -58,7 +58,7 @@ $primary_color = isset($matches[0]) ? $matches[0] : '#3b82f6';
             <a class="navbar-brand d-flex align-items-center gap-2 fw-bold text-success" href="dashboard.php">
                 <img src="../assets/logo/logo_round.png" alt="Logo" width="40" height="40" class="rounded-circle shadow-sm">
                 <div class="d-none d-sm-block">
-                    <div class="lh-1" style="font-size: 1rem;">An Nadzir <span class="text-dark">LRC</span></div>
+                    <div class="lh-1" style="font-size: 1rem;">An Nadzir <span class="text-dark">Learning Center</span></div>
                     <div class="text-muted" style="font-size: 0.65rem; font-weight: 500;">Sistem Peminjaman Aset</div>
                 </div>
             </a>

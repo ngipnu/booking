@@ -2,6 +2,44 @@
 // Aplikasi Booking Fasilitas - Annadzir Islamic School
 // Landing Page
 session_start();
+
+// Ambil data aset + ruangan yang bisa dipinjam untuk landing page
+require_once 'config/database.php';
+$is_logged_in  = isset($_SESSION['login']) && $_SESSION['login'] === true;
+$user_role     = $_SESSION['role'] ?? '';
+$is_user       = in_array($user_role, ['user', 'pegawai']);
+
+$sql_landing = "
+    SELECT a.id, a.kode_aset as kode, a.nama_aset as nama, a.status, a.foto_aset, 
+           a.merk, a.lokasi_simpan, a.unit_pengguna,
+           k.nama_kategori, k.icon as kat_icon, 'aset' as tipe, a.created_at,
+           NULL as kapasitas,
+           MIN(CASE WHEN p.status_pinjam = 'disetujui' AND p.tgl_pinjam = CURDATE() THEN p.jam_mulai END) as jam_mulai_aktif,
+           MAX(CASE WHEN p.status_pinjam = 'disetujui' AND p.tgl_pinjam = CURDATE() THEN p.jam_selesai END) as jam_selesai_aktif
+    FROM aset a 
+    LEFT JOIN kategori k ON a.id_kategori = k.id
+    LEFT JOIN peminjaman p ON p.id_aset = a.id AND p.status_pinjam = 'disetujui' AND p.tgl_pinjam = CURDATE()
+    WHERE a.bisa_dipinjam = 'Y' AND a.status != 'rusak'
+    GROUP BY a.id, a.kode_aset, a.nama_aset, a.status, a.foto_aset, a.merk, a.lokasi_simpan, a.unit_pengguna, k.nama_kategori, k.icon, a.created_at
+
+    UNION ALL
+    
+    SELECT r.id, r.kode_ruangan as kode, r.nama_ruangan as nama, r.status, 
+           r.foto_ruangan as foto_aset,
+           NULL as merk, g.nama_gedung as lokasi_simpan, NULL as unit_pengguna,
+           'Ruangan' as nama_kategori, 'building' as kat_icon, 'ruangan' as tipe, r.created_at,
+           r.kapasitas,
+           MIN(CASE WHEN p.status_pinjam = 'disetujui' AND p.tgl_pinjam = CURDATE() THEN p.jam_mulai END) as jam_mulai_aktif,
+           MAX(CASE WHEN p.status_pinjam = 'disetujui' AND p.tgl_pinjam = CURDATE() THEN p.jam_selesai END) as jam_selesai_aktif
+    FROM ruangan r
+    LEFT JOIN gedung g ON r.id_gedung = g.id
+    LEFT JOIN peminjaman p ON p.id_ruangan = r.id AND p.status_pinjam = 'disetujui' AND p.tgl_pinjam = CURDATE()
+    WHERE r.bisa_dipinjam = 'Y' AND r.status != 'perbaikan'
+    GROUP BY r.id, r.kode_ruangan, r.nama_ruangan, r.status, r.foto_ruangan, g.nama_gedung, r.created_at, r.kapasitas
+    
+    ORDER BY foto_aset DESC, created_at DESC
+    LIMIT 6";
+$aset_landing = $koneksi->query($sql_landing);
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -33,7 +71,7 @@ session_start();
             <a class="navbar-brand d-flex align-items-center gap-2" href="index.php">
                 <img src="assets/logo/logo_round.png?v=1" alt="Logo Annadzir" style="width: 45px; height: 45px; object-fit: contain;">
                 <div class="d-flex flex-column lh-1">
-                    <span class="font-heading fw-bold text-dark fs-5">Sarpras Annadzir</span>
+                    <span class="font-heading fw-bold text-dark fs-5">Sarana & Prasarana</span>
                     <span class="text-muted" style="font-size: 0.8rem; font-weight: 500;">Manajemen Aset</span>
                 </div>
             </a>
@@ -50,7 +88,7 @@ session_start();
                 </ul>
                 <div class="d-flex">
                     <a href="login.php" class="btn btn-primary rounded-pill px-4 fw-medium shadow-sm d-flex align-items-center gap-2">
-                        <i class="fa-solid fa-user-lock"></i> Login Pegawai
+                        <i class="fa-solid fa-user-lock"></i> Login
                     </a>
                 </div>
             </div>
@@ -66,17 +104,14 @@ session_start();
         <div class="container position-relative z-1">
             <div class="row justify-content-center">
                 <div class="col-lg-8 animate-fade-up">
-                    <span class="badge bg-white text-primary rounded-pill px-3 py-2 mb-4 shadow-sm border border-primary-subtle fw-medium">
-                        <i class="fa-solid fa-shield-halved me-1"></i> Sistem Aman & Terpercaya
-                    </span>
                     <h1 class="display-4 fw-bold font-heading mb-4 text-dark">
                         Sistem Manajemen <span class="text-primary position-relative d-inline-block">Aset & Fasilitas</span>
                     </h1>
-                    <p class="lead text-muted mb-5 px-md-5">Platform cerdas khusus Divisi Sarana dan Prasarana (Sarpras) An Nadzir Islamic School. Digunakan untuk mendata aset lembaga, inventaris tak ternilai, serta mengatur izin sirkulasi peminjaman pegawai.</p>
+                    <p class="lead text-muted mb-5 px-md-5">Platform cerdas khusus Divisi Sarana dan Prasarana (Sarpras) An Nadzir Islamic School. Digunakan untuk mendata aset lembaga, inventaris tak ternilai, serta mengatur izin peminjaman fasilitas bagi civitas akademika.</p>
                     
                     <div class="d-flex flex-column flex-md-row justify-content-center gap-3">
                         <a href="login.php" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm">
-                            Masuk Sekarang <i class="fa-solid fa-arrow-right ms-2"></i>
+                            Login Sekarang<i class="fa-solid fa-arrow-right ms-2"></i>
                         </a>
                         <a href="#fasilitas" class="btn btn-outline-dark bg-white btn-lg rounded-pill px-4 shadow-sm">
                             Eksplor Fasilitas <i class="fa-solid fa-magnifying-glass ms-2"></i>
@@ -95,66 +130,101 @@ session_start();
                 <p class="text-muted mx-auto" style="max-width: 600px;">Telusuri berbagai kategori aset inventaris sarana dan prasarana yang kami sediakan untuk menunjang aktivitas seluruh civitas akademika.</p>
             </div>
             
-            <div class="row g-4 mt-2">
-                <!-- Fasilitas 1 -->
-                <div class="col-md-4 animate-fade-up" style="animation-delay: 0.1s;">
+            <div class="row g-4 mt-2" id="fasilitas-grid">
+                <?php 
+                $delay = 0.1;
+                $icon_map = ['laptop'=>'fa-laptop','car'=>'fa-car-side','building'=>'fa-building','chair'=>'fa-chair','box'=>'fa-box'];
+                
+                if ($aset_landing && $aset_landing->num_rows > 0):
+                    while ($item = $aset_landing->fetch_assoc()):
+                        $icon = $icon_map[$item['kat_icon']] ?? 'fa-box';
+                        
+                        // Badge status: cek pinjaman aktif hari ini
+                        if (!empty($item['jam_mulai_aktif']) && !empty($item['jam_selesai_aktif'])) {
+                            $jam_dari = substr($item['jam_mulai_aktif'], 0, 5);
+                            $jam_sd   = substr($item['jam_selesai_aktif'], 0, 5);
+                            $status_badge = '<span class="badge bg-danger position-absolute top-0 end-0 m-3 rounded-pill px-3 py-2 shadow-sm" style="font-size:0.7rem;"><i class="fa-solid fa-clock me-1"></i> Dipakai ' . $jam_dari . '–' . $jam_sd . '</span>';
+                        } elseif ($item['status'] === 'tersedia') {
+                            $status_badge = '<span class="badge bg-success position-absolute top-0 end-0 m-3 rounded-pill px-3 py-2 shadow-sm"><i class="fa-solid fa-check-circle me-1"></i> Tersedia</span>';
+                        } else {
+                            $status_badge = '<span class="badge bg-warning text-dark position-absolute top-0 end-0 m-3 rounded-pill px-3 py-2 shadow-sm"><i class="fa-solid fa-calendar-check me-1"></i> Bisa Dipesan</span>';
+                        }
+                        
+                        // Tentukan folder foto berdasarkan tipe
+                        $foto = $item['foto_aset'];
+                        $foto_folder = $item['tipe'] === 'ruangan' ? 'assets/uploads/ruangan/' : 'assets/uploads/aset/';
+                        
+                        if (!empty($foto) && file_exists(__DIR__ . '/' . $foto_folder . $foto)) {
+                            $img_tag = '<img src="' . $foto_folder . htmlspecialchars($foto) . '" class="card-img-top object-fit-cover" alt="' . htmlspecialchars($item['nama']) . '" style="height: 240px;">';
+                        } else {
+                            $colors = ['Elektronik'=>'#6366f1,#8b5cf6','Kendaraan'=>'#0ea5e9,#06b6d4','Ruangan'=>'#10b981,#34d399','Mebel'=>'#f59e0b,#fbbf24','Lainnya'=>'#64748b,#94a3b8'];
+                            $c = $colors[$item['nama_kategori']] ?? '#6366f1,#8b5cf6';
+                            $img_tag = '<div class="d-flex align-items-center justify-content-center" style="height:240px;background:linear-gradient(135deg,'.$c.');"><i class="fa-solid '.$icon.' text-white" style="font-size:5rem;opacity:0.4;"></i></div>';
+                        }
+                        
+                        // Tentukan link tombol
+                        if ($is_logged_in && $is_user) {
+                            $link_btn = $item['tipe'] === 'ruangan' 
+                                ? 'pegawai/pinjam_ruangan.php?id=' . $item['id']
+                                : 'pegawai/peminjaman.php?id=' . $item['id'];
+                        } elseif ($is_logged_in && $user_role === 'admin') {
+                            $link_btn = 'login.php'; // admin tidak perlu pinjam
+                        } else {
+                            $link_btn = 'login.php'; // belum login
+                        }
+                ?>
+                <div class="col-md-4 animate-fade-up" style="animation-delay: <?= $delay ?>s;">
                     <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden card-hover">
                         <div class="position-relative">
-                            <img src="assets/images/official_car.png" class="card-img-top object-fit-cover" alt="Mobil Dinas" style="height: 240px;">
-                            <span class="badge bg-success position-absolute top-0 end-0 m-3 rounded-pill px-3 py-2 shadow-sm">
-                                <i class="fa-solid fa-check-circle me-1"></i> Tersedia
+                            <?= $img_tag ?>
+                            <?= $status_badge ?>
+                            <?php if($item['nama_kategori']): ?>
+                            <span class="badge bg-dark bg-opacity-50 text-white position-absolute bottom-0 start-0 m-3 rounded-pill px-2 py-1" style="font-size:0.65rem;backdrop-filter:blur(8px);">
+                                <i class="fa-solid <?= $icon ?> me-1"></i><?= htmlspecialchars($item['nama_kategori']) ?>
                             </span>
+                            <?php endif; ?>
                         </div>
                         <div class="card-body p-4 text-center">
                             <div class="icon-circle bg-primary-soft text-primary mb-3 mx-auto">
-                                <i class="fa-solid fa-car-side fs-4"></i>
+                                <i class="fa-solid <?= $icon ?> fs-4"></i>
                             </div>
-                            <h4 class="font-heading fw-bold">Kendaraan Dinas</h4>
-                            <p class="text-muted small mb-4">Pesan mobil operasional untuk kepentingan rapat luar maupun dinas pendidikan.</p>
-                            <a href="login.php" class="btn btn-outline-primary rounded-pill w-100">Cek Jadwal</a>
+                            <h4 class="font-heading fw-bold"><?= htmlspecialchars($item['nama']) ?></h4>
+                            <p class="text-muted small mb-1">
+                                <?php if($item['merk']): ?><strong><?= htmlspecialchars($item['merk']) ?></strong> · <?php endif; ?>
+                                Kode: <code><?= htmlspecialchars($item['kode']) ?></code>
+                            </p>
+                            <?php if($item['tipe'] === 'ruangan' && !empty($item['kapasitas'])): ?>
+                            <p class="mb-2">
+                                <span class="badge rounded-pill px-3 py-2" style="background: rgba(99,102,241,0.1); color: #6366f1; font-size:0.75rem;">
+                                    <i class="fa-solid fa-users me-1"></i> Kapasitas <?= (int)$item['kapasitas'] ?> orang
+                                </span>
+                            </p>
+                            <?php endif; ?>
+                            <?php if($item['lokasi_simpan']): ?>
+                            <p class="text-muted small mb-3"><i class="fa-solid fa-location-dot me-1 opacity-50"></i><?= htmlspecialchars($item['lokasi_simpan']) ?></p>
+                            <?php endif; ?>
+                            <?php if(!empty($item['jam_mulai_aktif'])): ?>
+                            <a href="<?= $link_btn ?>" class="btn btn-outline-secondary rounded-pill w-100" disabled style="opacity:0.6;cursor:not-allowed;">
+                                <i class="fa-solid fa-lock me-1"></i> Sedang Dipakai
+                            </a>
+                            <?php else: ?>
+                            <a href="<?= $link_btn ?>" class="btn btn-outline-primary rounded-pill w-100">
+                                <i class="fa-solid fa-calendar-plus me-1"></i> Ajukan Peminjaman
+                            </a>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Fasilitas 2 -->
-                <div class="col-md-4 animate-fade-up" style="animation-delay: 0.2s;">
-                    <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden card-hover">
-                        <div class="position-relative">
-                            <img src="assets/images/multimedia_room.png" class="card-img-top object-fit-cover" alt="Ruang Multimedia" style="height: 240px;">
-                            <span class="badge bg-warning text-dark position-absolute top-0 end-0 m-3 rounded-pill px-3 py-2 shadow-sm">
-                                <i class="fa-solid fa-calendar-check me-1"></i> Bisa Dipesan
-                            </span>
-                        </div>
-                        <div class="card-body p-4 text-center">
-                            <div class="icon-circle bg-tertiary-soft text-tertiary mb-3 mx-auto">
-                                <i class="fa-solid fa-chalkboard-user fs-4"></i>
-                            </div>
-                            <h4 class="font-heading fw-bold">Ruang Presentasi</h4>
-                            <p class="text-muted small mb-4">Sewa ruangan rapat atau multimedia lengkap dengan proyektor interaktif terpadu.</p>
-                            <a href="login.php" class="btn btn-outline-primary rounded-pill w-100">Reservasi</a>
-                        </div>
+                <?php $delay += 0.1; endwhile;
+                else: ?>
+                <div class="col-12 text-center py-5">
+                    <div class="text-muted">
+                        <i class="fa-solid fa-box-open fs-1 mb-3 d-block opacity-30"></i>
+                        <p>Belum ada aset yang tersedia untuk dipinjam.</p>
+                        <small>Admin dapat menambahkan aset dengan mengaktifkan opsi "Bisa Dipinjam".</small>
                     </div>
                 </div>
-
-                <!-- Fasilitas 3 -->
-                <div class="col-md-4 animate-fade-up" style="animation-delay: 0.3s;">
-                    <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden card-hover">
-                        <div class="position-relative">
-                            <img src="assets/images/electronic_gear.png" class="card-img-top object-fit-cover" alt="Alat Dokumentasi" style="height: 240px;">
-                            <span class="badge bg-success position-absolute top-0 end-0 m-3 rounded-pill px-3 py-2 shadow-sm">
-                                <i class="fa-solid fa-check-circle me-1"></i> Tersedia
-                            </span>
-                        </div>
-                        <div class="card-body p-4 text-center">
-                            <div class="icon-circle bg-secondary-soft text-secondary mx-auto mb-3">
-                                <i class="fa-solid fa-camera-retro fs-4"></i>
-                            </div>
-                            <h4 class="font-heading fw-bold">Perangkat Ekstra</h4>
-                            <p class="text-muted small mb-4">Peminjaman alat tulis, smartphone operasional admin, hingga kamera digital DSLR/Mirrorless.</p>
-                            <a href="login.php" class="btn btn-outline-primary rounded-pill w-100">Lihat Alat</a>
-                        </div>
-                    </div>
-                </div>
+                <?php endif; ?>
             </div>
         </div>
     </section>
@@ -164,7 +234,7 @@ session_start();
         <div class="container py-5">
             <div class="text-center mb-5 animate-fade-up">
                 <h2 class="font-heading fw-bold pb-2 section-title mx-auto text-dark">Bagaimana Meminjam Aset?</h2>
-                <p class="text-muted mx-auto" style="max-width: 600px;">Hanya aset dengan status "Bisa Dipinjam" (seperti mobil/alat) yang diizinkan untuk diklaim sementara waktu. Aset inventaris internal tetap utuh dan terkalkulasi dalam total biaya lembaga.</p>
+                <p class="text-muted mx-auto" style="max-width: 600px;">Hanya aset dengan status "Bisa Dipinjam" (seperti mobil/alat) yang diizinkan untuk diklaim sementara waktu.</p>
             </div>
             
             <div class="row g-4 mt-2">
@@ -172,28 +242,28 @@ session_start();
                     <div class="timeline-step text-center px-2">
                         <div class="step-number fw-bold mb-3 mx-auto bg-primary text-white shadow-sm d-flex align-items-center justify-content-center rounded-circle" style="width: 50px; height: 50px; font-size: 1.25rem;">1</div>
                         <h4 class="h5 font-heading fw-bold text-dark">Login SSO</h4>
-                        <p class="text-muted small">Gunakan portal login aman dengan Nomor Induk (NIY) & Kata Sandi.</p>
+                        <p class="text-muted small">Gunakan portal login aman dengan Akun & Kata Sandi.</p>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6 animate-fade-up" style="animation-delay: 0.2s;">
                     <div class="timeline-step text-center px-2">
                         <div class="step-number fw-bold mb-3 mx-auto bg-white text-primary border border-primary shadow-sm d-flex align-items-center justify-content-center rounded-circle" style="width: 50px; height: 50px; font-size: 1.25rem;">2</div>
                         <h4 class="h5 font-heading fw-bold text-dark">Cari Fasilitas</h4>
-                        <p class="text-muted small">Tentukan tanggal dan pilih armada/alat yang dibutuhkan.</p>
+                        <p class="text-muted small">Tentukan tanggal dan pilih alat/ruangan yang dibutuhkan.</p>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6 animate-fade-up" style="animation-delay: 0.3s;">
                     <div class="timeline-step text-center px-2">
                         <div class="step-number fw-bold mb-3 mx-auto bg-white text-primary border border-primary shadow-sm d-flex align-items-center justify-content-center rounded-circle" style="width: 50px; height: 50px; font-size: 1.25rem;">3</div>
                         <h4 class="h5 font-heading fw-bold text-dark">Proses Admin</h4>
-                        <p class="text-muted small">Permohonan otomatis diteruskan pada tata usaha / sarpras.</p>
+                        <p class="text-muted small">Permohonan otomatis diteruskan pada pengelola sarpras.</p>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6 animate-fade-up" style="animation-delay: 0.4s;">
                     <div class="timeline-step text-center px-2">
                         <div class="step-number fw-bold mb-3 mx-auto bg-white text-primary border border-primary shadow-sm d-flex align-items-center justify-content-center rounded-circle" style="width: 50px; height: 50px; font-size: 1.25rem;">4</div>
-                        <h4 class="h5 font-heading fw-bold text-dark">Bawa QR Bukti</h4>
-                        <p class="text-muted small">Serahkan bukti disetujui digital kepada pihak sarpras secara mulus.</p>
+                        <h4 class="h5 font-heading fw-bold text-dark">Tunggu Notifikasi</h4>
+                        <p class="text-muted small">Tunggu hingga notifikasi persetujuan muncul.</p>
                     </div>
                 </div>
             </div>
@@ -203,14 +273,12 @@ session_start();
     <!-- CALL TO ACTION -->
     <section class="py-5 bg-primary text-white position-relative overflow-hidden">
         <div class="container py-5 text-center position-relative z-1">
-            <h2 class="display-6 fw-bold font-heading mb-4">Siap Memaksimalkan Kinerja Anda?</h2>
-            <p class="lead mb-5 opacity-75" style="max-width: 700px; margin: 0 auto;">Bergabung dan mulailah kemudahan tanpa batas dengan mengotomatisasi dokumen secara ramah lingkungan.</p>
+            <h2 class="display-6 fw-bold font-heading mb-4">Masih bingung cara pinjam fasilitas?</h2>
+            <p class="lead mb-5 opacity-75" style="max-width: 700px; margin: 0 auto;">Hubungi <a href="https://wa.me/6285161252008" class="text-white">Humas</a> atau <a href="login.php" class="text-white">Masuk Dashboard</a> untuk bantuan lebih lanjut.</p>
             <a href="login.php" class="btn btn-light text-primary btn-lg rounded-pill px-5 fw-bold shadow">
                 Masuk Dashboard Pegawai <i class="fa-solid fa-arrow-right ms-2"></i>
             </a>
         </div>
-        <!-- Decorative bg -->
-        <i class="fa-solid fa-building-columns position-absolute text-white opacity-10" style="font-size: 300px; top: -50px; right: -50px; transform: rotate(-15deg);"></i>
     </section>
 
     <!-- FOOTER -->
@@ -220,9 +288,12 @@ session_start();
                 <div class="col-lg-4">
                     <div class="d-flex align-items-center gap-2 mb-3">
                         <img src="assets/logo/logo_round.png?v=1" alt="Logo" class="bg-white rounded-circle p-1" style="width: 50px; height: 50px; object-fit: contain;">
-                        <h5 class="mb-0 font-heading fw-bold">Annadzir School</h5>
+                        <div class="d-flex flex-column lh-1">
+                            <h5 class="mb-1 font-heading fw-bold">Sarana & Prasarana</h5>
+                            <span class="text-white opacity-75" style="font-size: 0.8rem; font-weight: 500;">Manajemen Aset</span>
+                        </div>
                     </div>
-                    <p class="text-secondary small">Menjembatani keunggulan pendidikan melalui kolaborasi sistem manajemen fasilitas kelas atas dengan balutan integrasi yang profesional.</p>
+                    <p class="text-secondary small">Menjadi Lembaga Pendidikan Berwawasan Lingkungan yang Efektif, Profesional, dan Bermutu dalam Membina Pribadi Unggul.</p>
                 </div>
                 
                 <div class="col-lg-2 col-6">
@@ -234,28 +305,19 @@ session_start();
                     </ul>
                 </div>
                 
-                <div class="col-lg-3 col-6">
-                    <h6 class="text-white mb-3 fw-bold">Layanan</h6>
-                    <ul class="list-unstyled mb-0 d-flex flex-column gap-2 small">
-                        <li><a href="#" class="text-secondary text-decoration-none footer-link">Dokumentasi API</a></li>
-                        <li><a href="#" class="text-secondary text-decoration-none footer-link">Bantuan Penggunaan</a></li>
-                        <li><a href="#" class="text-secondary text-decoration-none footer-link">Tanya Tim IT</a></li>
-                    </ul>
-                </div>
-                
                 <div class="col-lg-3">
                     <h6 class="text-white mb-3 fw-bold">Hubungi Kami</h6>
                     <ul class="list-unstyled mb-0 d-flex flex-column gap-2 small text-secondary">
                         <li><i class="fa-solid fa-envelope me-2"></i> info@annadzir.sch.id</li>
-                        <li><i class="fa-solid fa-phone me-2"></i> +62 821 0000 0000</li>
-                        <li><i class="fa-solid fa-location-dot me-2"></i> Gedung Rektorat Lt.1</li>
+                        <li><i class="fa-solid fa-phone me-2"></i> +62 851 6125 2008</li>
+                        <li><i class="fa-solid fa-location-dot me-2"></i> Bendungan Karet Cisirih RT. 09/02 Desa Kamasan Kec. Cinangka Kab. Serang Prov. Banten 42167</li>
                     </ul>
                 </div>
             </div>
             
             <hr class="border-secondary opacity-25">
             <div class="text-center text-secondary small pt-2">
-                &copy; <?= date("Y") ?> Annadzir Bagian Sarpras & Kepegawaian. PHP Native, Bootstrap 5.
+                &copy; <?= date("Y") ?> An Nadzir Islamic School
             </div>
         </div>
     </footer>

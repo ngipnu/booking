@@ -275,15 +275,15 @@ include '../layouts/sidebar.php';
             <div class="filter-panel p-4 shadow-sm">
                 <form action="" method="GET" class="row g-3">
                     <div class="col-md-3">
-                        <label class="form-label small fw-bold text-muted">Cari Nama/Kode/Merk</label>
+                        <label for="filter-search" class="form-label small fw-bold text-muted">Cari Nama/Kode/Merk</label>
                         <div class="input-group input-group-sm">
                             <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-search opacity-50"></i></span>
-                            <input type="text" class="form-control border-start-0" name="search" value="<?= htmlspecialchars($filter_search) ?>" placeholder="Masukkan kata kunci...">
+                            <input type="text" id="filter-search" class="form-control border-start-0" name="search" value="<?= htmlspecialchars($filter_search) ?>" placeholder="Masukkan kata kunci...">
                         </div>
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label small fw-bold text-muted">Kategori</label>
-                        <select class="form-select form-select-sm" name="kategori">
+                        <label for="filter-kategori" class="form-label small fw-bold text-muted">Kategori</label>
+                        <select id="filter-kategori" class="form-select form-select-sm" name="kategori">
                             <option value="">Semua Kategori</option>
                             <?php foreach($kategori_list as $kat): ?>
                                 <option value="<?= $kat['id'] ?>" <?= $filter_kategori == $kat['id'] ? 'selected' : '' ?>><?= $kat['nama_kategori'] ?></option>
@@ -291,8 +291,8 @@ include '../layouts/sidebar.php';
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label small fw-bold text-muted">Unit Pengguna</label>
-                        <select class="form-select form-select-sm" name="unit">
+                        <label for="filter-unit" class="form-label small fw-bold text-muted">Unit Pengguna</label>
+                        <select id="filter-unit" class="form-select form-select-sm" name="unit">
                             <option value="">Semua Unit</option>
                             <?php 
                             $unit_unik->data_seek(0);
@@ -302,8 +302,8 @@ include '../layouts/sidebar.php';
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label small fw-bold text-muted">Kondisi</label>
-                        <select class="form-select form-select-sm" name="kondisi">
+                        <label for="filter-kondisi" class="form-label small fw-bold text-muted">Kondisi</label>
+                        <select id="filter-kondisi" class="form-select form-select-sm" name="kondisi">
                             <option value="">Semua Kondisi</option>
                             <option value="baik" <?= $filter_kondisi == 'baik' ? 'selected' : '' ?>>✅ Baik</option>
                             <option value="rusak_ringan" <?= $filter_kondisi == 'rusak_ringan' ? 'selected' : '' ?>>⚠️ Rusak Ringan</option>
@@ -468,43 +468,43 @@ include '../layouts/sidebar.php';
                 <h5 class="modal-title font-heading fw-bold">Registrasi Aset Baru</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="proses.php" method="POST">
+            <form action="proses.php" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="aksi" value="tambah">
                 <div class="modal-body px-4 py-3 text-start">
                     <div class="row g-3">
                         <div class="col-md-3">
-                            <label class="form-label small fw-bold text-muted">Kode Inventaris</label>
-                            <input type="text" class="form-control" name="kode_aset" placeholder="INV-..." required>
+                            <label for="add-kode" class="form-label small fw-bold text-muted">Kode Inventaris</label>
+                            <input type="text" id="add-kode" class="form-control" name="kode_aset" placeholder="INV-..." required>
                         </div>
                         <div class="col-md-9">
-                            <label class="form-label small fw-bold text-muted">Nama Barang / Ruangan</label>
-                            <input type="text" class="form-control" name="nama_aset" placeholder="e.g. TV Android / Ruang Multimedia" required>
+                            <label for="add-nama" class="form-label small fw-bold text-muted">Nama Barang / Ruangan</label>
+                            <input type="text" id="add-nama" class="form-control" name="nama_aset" placeholder="e.g. TV Android / Ruang Multimedia" required>
                         </div>
                         
                         <div class="col-md-4">
-                            <label class="form-label small fw-bold text-muted">Kategori</label>
-                            <select class="form-select select-kategori-template" name="id_kategori" data-target-finance="finance-section-add" data-target-spec="spec-section-add">
+                            <label for="add-kategori" class="form-label small fw-bold text-muted">Kategori</label>
+                            <select id="add-kategori" class="form-select select-kategori-template" name="id_kategori" data-target-finance="finance-section-add" data-target-spec="spec-section-add">
                                 <?php foreach($kategori_list as $kat): ?>
                                     <option value="<?= $kat['id'] ?>" data-nama="<?= strtolower($kat['nama_kategori']) ?>"><?= $kat['nama_kategori'] ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label small fw-bold text-muted">Merk</label>
-                            <input type="text" class="form-control" name="merk" placeholder="e.g. Samsung / Sony">
+                            <label for="add-merk" class="form-label small fw-bold text-muted">Merk</label>
+                            <input type="text" id="add-merk" class="form-control" name="merk" placeholder="e.g. Samsung / Sony">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label small fw-bold text-muted">Warna</label>
-                            <input type="text" class="form-control" name="warna" placeholder="e.g. Hitam">
+                            <label for="add-warna" class="form-label small fw-bold text-muted">Warna</label>
+                            <input type="text" id="add-warna" class="form-control" name="warna" placeholder="e.g. Hitam">
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label small fw-bold text-muted">Unit Pengguna (Pemegang)</label>
-                            <input type="text" class="form-control" name="unit_pengguna" placeholder="e.g. SDIT An Nadzir" list="list-unit">
+                            <label for="add-unit" class="form-label small fw-bold text-muted">Unit Pengguna (Pemegang)</label>
+                            <input type="text" id="add-unit" class="form-control" name="unit_pengguna" placeholder="e.g. SDIT An Nadzir" list="list-unit">
                         </div>
-                        <div class="col-md-4 text-start">
-                            <label class="form-label small fw-bold text-muted">Lokasi Ruangan (Master)</label>
-                            <select class="form-select" name="id_ruangan">
+                        <div class="col-md-4">
+                            <label for="add-id-ruangan" class="form-label small fw-bold text-muted">Lokasi Ruangan (Master)</label>
+                            <select id="add-id-ruangan" class="form-select" name="id_ruangan">
                                 <option value="">-- Manual / Belum Diset --</option>
                                 <?php 
                                 $lokasi_ruangan->data_seek(0);
@@ -513,18 +513,18 @@ include '../layouts/sidebar.php';
                                 <?php endwhile; ?>
                             </select>
                         </div>
-                        <div class="col-md-4 text-start">
-                            <label class="form-label small fw-bold text-muted">Lokasi Spesifik (Opsional)</label>
-                            <input type="text" class="form-control" name="lokasi_simpan" placeholder="e.g. Di Atas Meja/Pojok" list="list-lokasi">
+                        <div class="col-md-4">
+                            <label for="add-lokasi" class="form-label small fw-bold text-muted">Lokasi Spesifik (Opsional)</label>
+                            <input type="text" id="add-lokasi" class="form-control" name="lokasi_simpan" placeholder="e.g. Di Atas Meja/Pojok" list="list-lokasi">
                         </div>
-                        <div class="col-md-8 text-start">
-                            <label class="form-label small fw-bold text-muted">Penanggung Jawab / Pengelola</label>
-                            <input type="text" class="form-control" name="penanggung_jawab" placeholder="e.g. Ust. Ahmad / Divisi Sarpras">
+                        <div class="col-md-8">
+                            <label for="add-pj" class="form-label small fw-bold text-muted">Penanggung Jawab / Pengelola</label>
+                            <input type="text" id="add-pj" class="form-control" name="penanggung_jawab" placeholder="e.g. Ust. Ahmad / Divisi Sarpras">
                         </div>
                         
-                        <div class="col-md-4 text-start">
-                            <label class="form-label small fw-bold text-muted">Bisa Dipinjam? (Publik)</label>
-                            <select class="form-select" name="bisa_dipinjam">
+                        <div class="col-md-4">
+                            <label for="add-bisa-dipinjam" class="form-label small fw-bold text-muted">Bisa Dipinjam? (Publik)</label>
+                            <select id="add-bisa-dipinjam" class="form-select" name="bisa_dipinjam">
                                 <option value="Y">🌐 Bisa Dipinjam</option>
                                 <option value="N">🔒 Internal Saja</option>
                             </select>
@@ -534,16 +534,16 @@ include '../layouts/sidebar.php';
                         
                         <div id="finance-section-add" class="row g-3 p-0 m-0">
                             <div class="col-md-4">
-                                <label class="form-label small fw-bold text-muted">Harga Beli (Rp)</label>
-                                <input type="number" class="form-control" name="harga_beli" placeholder="0">
+                                <label for="add-harga" class="form-label small fw-bold text-muted">Harga Beli (Rp)</label>
+                                <input type="number" id="add-harga" class="form-control" name="harga_beli" placeholder="0">
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label small fw-bold text-muted">Tanggal Perolehan</label>
-                                <input type="date" class="form-control" id="add_tgl_beli" name="tgl_beli" value="<?= date('Y-m-d') ?>">
+                                <label for="add_tgl_beli" class="form-label small fw-bold text-muted">Tanggal Perolehan</label>
+                                <input type="date" id="add_tgl_beli" class="form-control" name="tgl_beli" value="<?= date('Y-m-d') ?>">
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label small fw-bold text-muted">Kondisi</label>
-                                <select class="form-select" name="kondisi">
+                                <label for="add-kondisi" class="form-label small fw-bold text-muted">Kondisi</label>
+                                <select id="add-kondisi" class="form-select" name="kondisi">
                                     <option value="baik">✅ Baik</option>
                                     <option value="rusak_ringan">⚠️ Rusak Ringan</option>
                                     <option value="rusak_berat">❌ Rusak Berat</option>
@@ -551,15 +551,15 @@ include '../layouts/sidebar.php';
                             </div>
                             
                             <div class="col-md-4">
-                                <label class="form-label small fw-bold text-muted">Ada Garansi?</label>
-                                <select class="form-select" name="ada_garansi" id="add_ada_garansi">
+                                <label for="add_ada_garansi" class="form-label small fw-bold text-muted">Ada Garansi?</label>
+                                <select id="add_ada_garansi" class="form-select" name="ada_garansi">
                                     <option value="N">Tidak Ada</option>
                                     <option value="Y">Ya, Bergaransi</option>
                                 </select>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label small fw-bold text-muted">Cepat Atur Garansi</label>
-                                <select class="form-select select-duration" data-target="add_garansi_sampai" data-source="add_tgl_beli">
+                                <label for="add-durasi-garansi" class="form-label small fw-bold text-muted">Cepat Atur Garansi</label>
+                                <select id="add-durasi-garansi" class="form-select select-duration" data-target="add_garansi_sampai" data-source="add_tgl_beli">
                                     <option value="">Pilih Durasi</option>
                                     <option value="6">6 Bulan</option>
                                     <option value="12">1 Tahun</option>
@@ -569,28 +569,33 @@ include '../layouts/sidebar.php';
                                 </select>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label small fw-bold text-muted">Garansi Sampai</label>
-                                <input type="date" class="form-control" name="garansi_sampai" id="add_garansi_sampai">
+                                <label for="add_garansi_sampai" class="form-label small fw-bold text-muted">Garansi Sampai</label>
+                                <input type="date" id="add_garansi_sampai" class="form-control" name="garansi_sampai">
                             </div>
 
                             <div class="col-md-4">
-                                <label class="form-label small fw-bold text-muted">Sumber Anggaran</label>
-                                <input type="text" class="form-control" name="divisi_pembeli" placeholder="e.g. Divisi LRC">
+                                <label for="add-divisi" class="form-label small fw-bold text-muted">Sumber Anggaran</label>
+                                <input type="text" id="add-divisi" class="form-control" name="divisi_pembeli" placeholder="e.g. Divisi LRC">
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label small fw-bold text-muted">Tahun Anggaran</label>
-                                <input type="text" class="form-control" name="tahun_anggaran" placeholder="YYYY" value="<?= date('Y') ?>">
+                                <label for="add-tahun" class="form-label small fw-bold text-muted">Tahun Anggaran</label>
+                                <input type="text" id="add-tahun" class="form-control" name="tahun_anggaran" placeholder="YYYY" value="<?= date('Y') ?>">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label small fw-bold text-muted">Toko Pembelian</label>
-                                <input type="text" class="form-control" name="toko_pembelian" placeholder="Toko/Vendor">
+                                <label for="add-toko" class="form-label small fw-bold text-muted">Toko Pembelian</label>
+                                <input type="text" id="add-toko" class="form-control" name="toko_pembelian" placeholder="Toko/Vendor">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label small fw-bold text-muted">Kota Toko</label>
-                                <input type="text" class="form-control" name="kota_pembelian" placeholder="Kota Lokasi Toko">
+                                <label for="add-kota" class="form-label small fw-bold text-muted">Kota Toko</label>
+                                <input type="text" id="add-kota" class="form-control" name="kota_pembelian" placeholder="Kota Lokasi Toko">
                             </div>
                         </div>
                     </div>
+                </div>
+                <div class="px-4 pb-3">
+                    <label for="add-foto" class="form-label small fw-bold text-muted">Foto Aset <span class="fw-normal">(Opsional, maks. 3MB - JPG/PNG/WEBP)</span></label>
+                    <input type="file" id="add-foto" class="form-control" name="foto_aset" accept="image/jpeg,image/png,image/webp">
+                    <div class="form-text">Foto akan tampil di halaman landing untuk mempublish aset kepada pegawai.</div>
                 </div>
                 <div class="modal-footer border-0 px-4 pb-4">
                     <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
@@ -623,8 +628,8 @@ include '../layouts/sidebar.php';
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label small fw-bold">File Excel/CSV</label>
-                        <input type="file" class="form-control shadow-none" name="file_aset" accept=".csv, .xlsx, .xls" required>
+                        <label for="import-file" class="form-label small fw-bold">File Excel/CSV</label>
+                        <input type="file" id="import-file" class="form-control shadow-none" name="file_aset" accept=".csv, .xlsx, .xls" required>
                     </div>
 
                     <div class="bg-light rounded-3 p-3">
@@ -737,9 +742,10 @@ function toggleView(view) {
                 <h5 class="modal-title font-heading fw-bold">Update Data Inventaris</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="proses.php" method="POST" id="formEditAset">
+            <form action="proses.php" method="POST" enctype="multipart/form-data" id="formEditAset">
                 <input type="hidden" name="aksi" value="edit">
                 <input type="hidden" name="id" id="edit-id">
+                <input type="hidden" name="foto_aset_lama" id="edit-foto-lama">
                 <div class="modal-body px-4 py-3 text-start">
                     <div class="row g-3">
                         <div class="col-md-3">
@@ -819,9 +825,14 @@ function toggleView(view) {
                                     <option value="Y">Ya, Bergaransi</option>
                                 </select>
                             </div>
+                        <div class="col-12">
+                            <div id="edit-foto-preview" class="mb-2"></div>
+                            <label for="edit-foto" class="form-label small fw-bold text-muted">Ganti Foto Aset <span class="text-muted fw-normal">(Kosongkan jika tidak ingin mengubah)</span></label>
+                            <input type="file" id="edit-foto" class="form-control" name="foto_aset" accept="image/jpeg,image/png,image/webp">
                         </div>
                     </div>
                 </div>
+            </div>
                 <div class="modal-footer border-0 px-4 pb-4">
                     <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
                     <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold">Update Data</button>
@@ -905,6 +916,18 @@ function triggerEditFromFlyout() {
     document.getElementById('edit-kondisi').value = data.kondisi;
     document.getElementById('edit-harga').value = data.harga_beli;
     document.getElementById('edit-ada-garansi').value = data.ada_garansi;
+    document.getElementById('edit-foto-lama').value = data.foto_aset || '';
+    
+    // Show foto preview
+    const previewEl = document.getElementById('edit-foto-preview');
+    if (data.foto_aset) {
+        previewEl.innerHTML = `<div class="d-flex align-items-center gap-3 p-2 bg-light rounded-3 mb-2">
+            <img src="../../assets/uploads/aset/${data.foto_aset}" class="rounded-3 object-fit-cover shadow-sm" style="width:80px;height:60px;">
+            <div><div class="small fw-bold text-dark">Foto saat ini</div><div class="text-muted" style="font-size:0.75rem;">${data.foto_aset}</div></div>
+        </div>`;
+    } else {
+        previewEl.innerHTML = '<p class="text-muted small mb-2"><i class="fa-solid fa-image me-1 opacity-50"></i> Belum ada foto</p>';
+    }
 
     // Close Flyout first
     const flyout = bootstrap.Offcanvas.getInstance(document.getElementById('flyoutAset'));

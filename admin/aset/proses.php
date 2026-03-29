@@ -32,8 +32,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['aksi'])) {
     if ($_POST['aksi'] == 'tambah') {
         $kode_aset = $koneksi->real_escape_string($_POST['kode_aset']);
         
-        $sql = "INSERT INTO aset (kode_aset, nama_aset, merk, warna, id_kategori, id_ruangan, unit_pengguna, lokasi_simpan, divisi_pembeli, tahun_anggaran, toko_pembelian, kota_pembelian, harga_beli, tgl_beli, ada_garansi, garansi_sampai, kondisi, bisa_dipinjam, penanggung_jawab) 
-                VALUES ('$kode_aset', '$nama_aset', '$merk', '$warna', $id_kategori, $id_ruangan, '$unit_pengguna', '$lokasi_simpan', '$divisi_pembeli', '$tahun_anggaran', '$toko_pembelian', '$kota_pembelian', $harga_beli, '$tgl_beli', '$ada_garansi', ".($garansi_sampai?"'$garansi_sampai'":"NULL").", '$kondisi', '$bisa_dipinjam', '$penanggung_jawab')";
+        // Handle foto upload
+        $foto_aset = '';
+        if (!empty($_FILES['foto_aset']['name'])) {
+            $ext = strtolower(pathinfo($_FILES['foto_aset']['name'], PATHINFO_EXTENSION));
+            $allowed = ['jpg','jpeg','png','webp'];
+            if (in_array($ext, $allowed) && $_FILES['foto_aset']['size'] < 3145728) {
+                $filename = 'aset_' . time() . '_' . rand(100,999) . '.' . $ext;
+                $upload_path = '../../assets/uploads/aset/' . $filename;
+                if (move_uploaded_file($_FILES['foto_aset']['tmp_name'], $upload_path)) {
+                    $foto_aset = $filename;
+                }
+            }
+        }
+        
+        $sql = "INSERT INTO aset (kode_aset, nama_aset, merk, warna, id_kategori, id_ruangan, unit_pengguna, lokasi_simpan, divisi_pembeli, tahun_anggaran, toko_pembelian, kota_pembelian, harga_beli, tgl_beli, ada_garansi, garansi_sampai, kondisi, bisa_dipinjam, penanggung_jawab, foto_aset) 
+                VALUES ('$kode_aset', '$nama_aset', '$merk', '$warna', $id_kategori, $id_ruangan, '$unit_pengguna', '$lokasi_simpan', '$divisi_pembeli', '$tahun_anggaran', '$toko_pembelian', '$kota_pembelian', $harga_beli, '$tgl_beli', '$ada_garansi', ".($garansi_sampai?"'$garansi_sampai'":"NULL").", '$kondisi', '$bisa_dipinjam', '$penanggung_jawab', '$foto_aset')";
         
         if ($koneksi->query($sql)) {
             $_SESSION['pesan'] = "Aset '$nama_aset' berhasil diregistrasi.";
@@ -42,6 +56,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['aksi'])) {
     
     elseif ($_POST['aksi'] == 'edit') {
         $id = (int) $_POST['id'];
+        $existing_foto = $koneksi->real_escape_string($_POST['foto_aset_lama'] ?? '');
+        
+        // Handle foto upload (jika ada foto baru)
+        $foto_aset = $existing_foto;
+        if (!empty($_FILES['foto_aset']['name'])) {
+            $ext = strtolower(pathinfo($_FILES['foto_aset']['name'], PATHINFO_EXTENSION));
+            $allowed = ['jpg','jpeg','png','webp'];
+            if (in_array($ext, $allowed) && $_FILES['foto_aset']['size'] < 3145728) {
+                $filename = 'aset_' . time() . '_' . rand(100,999) . '.' . $ext;
+                $upload_path = '../../assets/uploads/aset/' . $filename;
+                if (move_uploaded_file($_FILES['foto_aset']['tmp_name'], $upload_path)) {
+                    // Hapus foto lama
+                    if ($existing_foto && file_exists('../../assets/uploads/aset/' . $existing_foto)) {
+                        unlink('../../assets/uploads/aset/' . $existing_foto);
+                    }
+                    $foto_aset = $filename;
+                }
+            }
+        }
         
         $sql = "UPDATE aset SET 
                 nama_aset='$nama_aset', 
@@ -61,7 +94,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['aksi'])) {
                 garansi_sampai=".($garansi_sampai?"'$garansi_sampai'":"NULL").",
                 kondisi='$kondisi', 
                 bisa_dipinjam='$bisa_dipinjam',
-                penanggung_jawab='$penanggung_jawab' 
+                penanggung_jawab='$penanggung_jawab',
+                foto_aset='$foto_aset'
                 WHERE id=$id";
         
         if ($koneksi->query($sql)) {

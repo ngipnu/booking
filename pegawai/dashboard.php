@@ -92,10 +92,7 @@ include 'layouts/header.php';
                     <div class="row align-items-center">
                         <div class="col-md-7">
                             <h2 class="fw-bold mb-2">Selamat Datang, <?= htmlspecialchars($nama_pemakai) ?>! 👋</h2>
-                            <p class="opacity-90 mb-4">Anda login menggunakan unit <b><?= htmlspecialchars($unit_pemakai) ?></b>. Cek ketersediaan dan ajukan peminjaman dengan mudah dalam hitungan detik.</p>
-                            <a href="peminjaman.php" class="btn-pinjam-lg">
-                                <i class="fa-solid fa-calendar-plus me-2"></i> Ajukan Pinjaman Baru
-                            </a>
+                            <p class="opacity-90 mb-0">Anda login sebagai unit <b><?= htmlspecialchars($unit_pemakai) ?></b>. Cek ketersediaan dan ajukan peminjaman dengan mudah.</p>
                         </div>
                         <div class="col-md-5 d-none d-md-block text-end">
                             <img src="https://cdni.iconscout.com/illustration/premium/thumb/checking-office-inventory-illustration-download-in-svg-png-gif-formats--inventory-management-taking-stock-warehouse-operations-pack-people-illustrations-5219213.png" alt="Hero" class="img-fluid" style="max-height: 200px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.2));">
@@ -108,7 +105,7 @@ include 'layouts/header.php';
                     <div class="col-md-3 col-6">
                         <div class="stat-card">
                             <div class="text-muted small fw-bold text-uppercase mb-1">Barang</div>
-                            <div class="h3 fw-bold text-dark mb-0"><?= $koneksi->query("SELECT COUNT(*) FROM aset WHERE bisa_dipinjam = 'Y' AND (id_kategori IS NULL OR id_kategori != (SELECT id FROM kategori WHERE nama_kategori = 'Ruangan'))")->fetch_row()[0] ?></div>
+                            <div class="h3 fw-bold text-dark mb-0"><?= $koneksi->query("SELECT COUNT(*) FROM aset WHERE bisa_dipinjam = 'Y' AND status != 'rusak'")->fetch_row()[0] ?></div>
                             <div class="text-success small mt-1"><i class="fa-solid fa-check-circle me-1"></i> Tersedia</div>
                         </div>
                     </div>
@@ -116,7 +113,7 @@ include 'layouts/header.php';
                         <div class="stat-card">
                             <div class="text-muted small fw-bold text-uppercase mb-1">Ruangan</div>
                             <div class="h3 fw-bold text-dark mb-0"><?= $koneksi->query("SELECT COUNT(*) FROM ruangan WHERE bisa_dipinjam = 'Y'")->fetch_row()[0] ?></div>
-                            <div class="text-primary small mt-1"><i class="fa-solid fa-building me-1"></i> Aktif</div>
+                            <div class="text-primary small mt-1"><i class="fa-solid fa-building me-1"></i> Tersedia</div>
                         </div>
                     </div>
                     <div class="col-md-3 col-6">
@@ -145,7 +142,7 @@ include 'layouts/header.php';
                                 </div>
                                 <div>
                                     <h5 class="fw-bold text-dark mb-1">Pinjam Barang</h5>
-                                    <p class="text-muted small mb-0">Elektronik, Mebel, Kendaraan, dll.</p>
+                                    <p class="text-muted small mb-0">Elektronik, Alat, Kendaraan, dll.</p>
                                 </div>
                             </div>
                         </a>
@@ -185,7 +182,7 @@ include 'layouts/header.php';
                 <!-- Activity Section -->
                 <div class="glass-card p-4 shadow-sm animate-fade-up h-100" style="animation-delay: 0.3s;">
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h6 class="fw-bold text-dark mb-0">Aktivitas Pinjam Saya</h6>
+                        <h6 class="fw-bold text-dark mb-0">Aktivitas Pinjaman Aktif</h6>
                         <a href="peminjaman.php" class="text-success small fw-bold text-decoration-none">Lihat Semua</a>
                     </div>
                     
@@ -244,7 +241,7 @@ include 'layouts/header.php';
 
                     <div class="mt-4 p-3 bg-success-soft rounded-4 border border-success-subtle">
                         <p class="small text-success mb-2 fw-bold"><i class="fa-solid fa-headset me-2"></i> Bantuan Sarpras</p>
-                        <p class="text-muted mb-0" style="font-size: 0.65rem;">Mengalami kendala saat peminjaman? Hubungi operator di unit masing-masing atau IT Pusat.</p>
+                        <p class="text-muted mb-0" style="font-size: 0.65rem;">Mengalami kendala saat peminjaman? Hubungi operator IT.</p>
                     </div>
                 </div>
             </div>

@@ -46,40 +46,76 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($koneksi->query($sql)) {
         $_SESSION['pesan_sukses'] = "Peminjaman berhasil diajukan! Menunggu persetujuan admin.";
 
-        // --- Fitur Notifikasi Email ---
-        // Ambil email pengelola dari profil
-        $profil = $koneksi->query("SELECT email_pengelola_inventaris, email_pengelola_ruangan, nama_lembaga FROM profil_lembaga LIMIT 1")->fetch_assoc();
-        
-        $to = "";
-        $item_name = "";
-        
-        if ($id_aset !== 'NULL') {
-            $to = $profil['email_pengelola_inventaris'];
-            $aset_info = $koneksi->query("SELECT nama_aset FROM aset WHERE id = $id_aset")->fetch_assoc();
-            $item_name = $aset_info['nama_aset'];
-            $subject = "Pengajuan Pinjam Barang Baru: $item_name";
-        } else {
-            $to = $profil['email_pengelola_ruangan'];
-            $ruang_info = $koneksi->query("SELECT nama_ruangan FROM ruangan WHERE id = $id_ruangan")->fetch_assoc();
-            $item_name = $ruang_info['nama_ruangan'];
-            $subject = "Booking Ruangan Baru: $item_name";
-        }
-
-        if (!empty($to)) {
-            $message = "Halo Pengelola,\n\n";
-            $message .= "Ada pengajuan baru di sistem booking " . $profil['nama_lembaga'] . ":\n\n";
-            $message .= "Item: " . $item_name . "\n";
-            $message .= "Peminjam: " . $_SESSION['nama_pemakai'] . " (" . $_SESSION['unit_pemakai'] . ")\n";
-            $message .= "Tanggal: " . date('d-m-Y', strtotime($tgl_pinjam)) . "\n";
-            $message .= "Waktu: " . $jam_mulai . " s/d " . $jam_selesai . "\n";
-            $message .= "Keperluan: " . $keperluan . "\n\n";
-            $message .= "Silakan login ke panel admin untuk memproses pengajuan ini.\n";
-            $message .= "Terima kasih.";
-
-            $headers = "From: no-reply@annadzir.sch.id";
+        // --- Notifikasi Email via PHPMailer SMTP ---
+        try {
+            require_once '../config/mailer.php';
             
-            // Kirim email (Menggunakan fungsi mail bawaan PHP)
-            @mail($to, $subject, $message, $headers);
+            $profil = $koneksi->query("SELECT email_pengelola_inventaris, email_pengelola_ruangan, email_admin, nama_lembaga FROM profil_lembaga LIMIT 1")->fetch_assoc();
+            
+            $to_email  = '';
+            $item_name = '';
+            $tipe_label = '';
+
+            if ($id_aset !== 'NULL') {
+                $to_email   = $profil['email_pengelola_inventaris'] ?: $profil['email_admin'];
+                $aset_info  = $koneksi->query("SELECT nama_aset, kode_aset FROM aset WHERE id = $id_aset")->fetch_assoc();
+                $item_name  = $aset_info['nama_aset'] . ' (' . $aset_info['kode_aset'] . ')';
+                $tipe_label = '📦 Barang / Inventaris';
+                $subject    = "[Sarpras] Pengajuan Pinjam Barang: {$aset_info['nama_aset']}";
+            } else {
+                $to_email   = $profil['email_pengelola_ruangan'] ?: $profil['email_admin'];
+                $ruang_info = $koneksi->query("SELECT nama_ruangan, kode_ruangan FROM ruangan WHERE id = $id_ruangan")->fetch_assoc();
+                $item_name  = $ruang_info['nama_ruangan'] . ' (' . $ruang_info['kode_ruangan'] . ')';
+                $tipe_label = '🏫 Ruangan';
+                $subject    = "[Sarpras] Booking Ruangan: {$ruang_info['nama_ruangan']}";
+            }
+
+            if (!empty($to_email)) {
+                $tgl_fmt    = date('l, d F Y', strtotime($tgl_pinjam));
+                $lembaga    = htmlspecialchars($profil['nama_lembaga']);
+                $nama_html  = htmlspecialchars($_SESSION['nama_pemakai']);
+                $unit_html  = htmlspecialchars($_SESSION['unit_pemakai']);
+                $item_html  = htmlspecialchars($item_name);
+                $need_html  = nl2br(htmlspecialchars($keperluan));
+
+                $body = "
+                <div style='font-family:Arial,sans-serif;max-width:600px;margin:auto;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;'>
+                    <div style='background:linear-gradient(135deg,#1e3a8a,#3b82f6);padding:30px 24px;text-align:center;'>
+                        <h2 style='color:#fff;margin:0;font-size:1.4rem;'>📋 Pengajuan Peminjaman Baru</h2>
+                        <p style='color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:0.9rem;'>$lembaga — Sistem Sarpras</p>
+                    </div>
+                    <div style='padding:28px 24px;background:#fff;'>
+                        <table style='width:100%;border-collapse:collapse;'>
+                            <tr><td style='padding:10px 0;border-bottom:1px solid #f1f5f9;color:#64748b;width:40%;font-size:0.85rem;'>Jenis</td>
+                                <td style='padding:10px 0;border-bottom:1px solid #f1f5f9;font-weight:700;'>$tipe_label</td></tr>
+                            <tr><td style='padding:10px 0;border-bottom:1px solid #f1f5f9;color:#64748b;font-size:0.85rem;'>Item</td>
+                                <td style='padding:10px 0;border-bottom:1px solid #f1f5f9;font-weight:700;color:#1e3a8a;'>$item_html</td></tr>
+                            <tr><td style='padding:10px 0;border-bottom:1px solid #f1f5f9;color:#64748b;font-size:0.85rem;'>Peminjam</td>
+                                <td style='padding:10px 0;border-bottom:1px solid #f1f5f9;'>$nama_html</td></tr>
+                            <tr><td style='padding:10px 0;border-bottom:1px solid #f1f5f9;color:#64748b;font-size:0.85rem;'>Unit / Divisi</td>
+                                <td style='padding:10px 0;border-bottom:1px solid #f1f5f9;'>$unit_html</td></tr>
+                            <tr><td style='padding:10px 0;border-bottom:1px solid #f1f5f9;color:#64748b;font-size:0.85rem;'>Tanggal</td>
+                                <td style='padding:10px 0;border-bottom:1px solid #f1f5f9;'>$tgl_fmt</td></tr>
+                            <tr><td style='padding:10px 0;border-bottom:1px solid #f1f5f9;color:#64748b;font-size:0.85rem;'>Waktu</td>
+                                <td style='padding:10px 0;border-bottom:1px solid #f1f5f9;font-weight:700;'>" . substr($jam_mulai,0,5) . " – " . substr($jam_selesai,0,5) . "</td></tr>
+                            <tr><td style='padding:10px 0;color:#64748b;font-size:0.85rem;vertical-align:top;'>Keperluan</td>
+                                <td style='padding:10px 0;'>$need_html</td></tr>
+                        </table>
+                        <div style='margin-top:28px;text-align:center;'>
+                            <a href='http://localhost/booking/booking/admin/' style='background:#1e3a8a;color:#fff;padding:12px 30px;border-radius:50px;text-decoration:none;font-weight:700;font-size:0.95rem;'>
+                                Proses di Panel Admin →
+                            </a>
+                        </div>
+                    </div>
+                    <div style='background:#f8fafc;padding:16px 24px;text-align:center;font-size:0.75rem;color:#94a3b8;'>
+                        Email otomatis dari Sistem Sarpras $lembaga. Jangan balas email ini.
+                    </div>
+                </div>";
+
+                kirimEmail($to_email, $subject, $body);
+            }
+        } catch (\Throwable $e) {
+            error_log("Email error: " . $e->getMessage());
         }
     } else {
         $_SESSION['pesan_error'] = "Terjadi kesalahan sistem: " . $koneksi->error;
