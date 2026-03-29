@@ -11,13 +11,14 @@ use PHPMailer\PHPMailer\Exception;
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 
 // ============================================================
-//  ISI SESUAI AKUN GMAIL YANG DIGUNAKAN UNTUK KIRIM EMAIL
+//  ISI SESUAI AKUN BREVO (https://app.brevo.com)
+//  SMTP Key ada di: Settings > SMTP & API > SMTP
 // ============================================================
-define('MAIL_HOST',     'smtp.gmail.com');
+define('MAIL_HOST',     'smtp-relay.brevo.com');
 define('MAIL_PORT',     587);
-define('MAIL_USERNAME', $_ENV['MAIL_USERNAME'] ?? 'emailanda@gmail.com');  // Ganti di .env
-define('MAIL_PASSWORD', $_ENV['MAIL_PASSWORD'] ?? '');                      // App Password Gmail
-define('MAIL_FROM',     $_ENV['MAIL_FROM']     ?? 'emailanda@gmail.com');
+define('MAIL_USERNAME', $_ENV['MAIL_USERNAME'] ?? '');  // Email login Brevo Anda
+define('MAIL_PASSWORD', $_ENV['MAIL_PASSWORD'] ?? '');  // SMTP Key dari Brevo
+define('MAIL_FROM',     $_ENV['MAIL_FROM']     ?? '');
 define('MAIL_FROM_NAME','Sarpras An Nadzir');
 // ============================================================
 
