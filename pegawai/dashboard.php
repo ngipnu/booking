@@ -24,13 +24,7 @@ $my_pending = $koneksi->query("SELECT COUNT(*) as total FROM peminjaman WHERE id
 // Kategori
 $categories = $koneksi->query("SELECT * FROM kategori");
 
-// Pinjaman Saya
-$my_active = $koneksi->query("SELECT p.*, a.nama_aset, k.nama_kategori, k.icon as kat_icon 
-                                FROM peminjaman p 
-                                JOIN aset a ON p.id_aset = a.id 
-                                LEFT JOIN kategori k ON a.id_kategori = k.id
-                                WHERE p.id_user = $user_id 
-                                ORDER BY p.tgl_pinjam DESC, p.jam_mulai DESC LIMIT 5");
+// Pinjaman Saya (Akan dipanggil di bagian aktivitas dengan query baru)
 $page_title = 'Beranda';
 include 'layouts/header.php'; 
 ?>
@@ -111,37 +105,76 @@ include 'layouts/header.php';
 
                 <!-- Stats Grid -->
                 <div class="row g-3 mb-4 animate-fade-up" style="animation-delay: 0.1s;">
-                    <div class="col-md-4">
+                    <div class="col-md-3 col-6">
                         <div class="stat-card">
-                            <div class="text-muted small fw-bold text-uppercase mb-1">Aset Tersedia</div>
-                            <div class="h3 fw-bold text-dark mb-0"><?= $total_aset ?></div>
-                            <div class="text-success small mt-1"><i class="fa-solid fa-check-circle me-1"></i> Siap Dipinjam</div>
+                            <div class="text-muted small fw-bold text-uppercase mb-1">Barang</div>
+                            <div class="h3 fw-bold text-dark mb-0"><?= $koneksi->query("SELECT COUNT(*) FROM aset WHERE bisa_dipinjam = 'Y' AND (id_kategori IS NULL OR id_kategori != (SELECT id FROM kategori WHERE nama_kategori = 'Ruangan'))")->fetch_row()[0] ?></div>
+                            <div class="text-success small mt-1"><i class="fa-solid fa-check-circle me-1"></i> Tersedia</div>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3 col-6">
                         <div class="stat-card">
-                            <div class="text-muted small fw-bold text-uppercase mb-1">Dipakai Hari Ini</div>
+                            <div class="text-muted small fw-bold text-uppercase mb-1">Ruangan</div>
+                            <div class="h3 fw-bold text-dark mb-0"><?= $koneksi->query("SELECT COUNT(*) FROM ruangan WHERE bisa_dipinjam = 'Y'")->fetch_row()[0] ?></div>
+                            <div class="text-primary small mt-1"><i class="fa-solid fa-building me-1"></i> Aktif</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="stat-card">
+                            <div class="text-muted small fw-bold text-uppercase mb-1">Dipakai</div>
                             <div class="h3 fw-bold text-dark mb-0"><?= $total_pinjam ?></div>
-                            <div class="text-primary small mt-1"><i class="fa-solid fa-clock me-1"></i> Jadwal Aktif</div>
+                            <div class="text-info small mt-1"><i class="fa-solid fa-clock me-1"></i> Hari Ini</div>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3 col-6">
                         <div class="stat-card">
-                            <div class="text-muted small fw-bold text-uppercase mb-1">Ajuan Pending Saya</div>
+                            <div class="text-muted small fw-bold text-uppercase mb-1">Pending</div>
                             <div class="h3 fw-bold text-dark mb-0"><?= $my_pending ?></div>
-                            <div class="text-warning small mt-1"><i class="fa-solid fa-hourglass-half me-1"></i> Menunggu Admin</div>
+                            <div class="text-warning small mt-1"><i class="fa-solid fa-hourglass-half me-1"></i> Ajuan Saya</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Categories Grid -->
-                <h6 class="fw-bold text-dark mb-3 animate-fade-up" style="animation-delay: 0.2s;">Kategori Inventaris</h6>
-                <div class="row g-3 animate-fade-up" style="animation-delay: 0.25s;">
-                    <?php while($cat = $categories->fetch_assoc()): ?>
-                    <div class="col-6 col-md-3">
-                        <a href="peminjaman.php?cat=<?= $cat['id'] ?>" class="category-card">
-                            <i class="fa-solid fa-<?= $cat['icon'] ?: 'box' ?>"></i>
-                            <h6 class="fw-bold text-dark mb-0 small"><?= $cat['nama_kategori'] ?></h6>
+                <!-- Main Actions Grid -->
+                <div class="row g-4 mb-5 animate-fade-up" style="animation-delay: 0.2s;">
+                    <div class="col-md-6">
+                        <a href="peminjaman.php" class="glass-card p-4 d-block text-decoration-none hover-zoom border-0" style="background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 60px; height: 60px;">
+                                    <i class="fa-solid fa-boxes-stacked fs-3"></i>
+                                </div>
+                                <div>
+                                    <h5 class="fw-bold text-dark mb-1">Pinjam Barang</h5>
+                                    <p class="text-muted small mb-0">Elektronik, Mebel, Kendaraan, dll.</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="pinjam_ruangan.php" class="glass-card p-4 d-block text-decoration-none hover-zoom border-0" style="background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 60px; height: 60px;">
+                                    <i class="fa-solid fa-door-open fs-3"></i>
+                                </div>
+                                <div>
+                                    <h5 class="fw-bold text-dark mb-1">Pinjam Ruangan</h5>
+                                    <p class="text-muted small mb-0">Kelas, Lab, Aula, Meeting Room, dll.</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Categories Grid (Items Only) -->
+                <h6 class="fw-bold text-dark mb-3 animate-fade-up" style="animation-delay: 0.25s;">Kategori Barang</h6>
+                <div class="row g-3 animate-fade-up" style="animation-delay: 0.3s;">
+                    <?php 
+                    $categories_items = $koneksi->query("SELECT * FROM kategori WHERE nama_kategori != 'Ruangan'");
+                    while($cat = $categories_items->fetch_assoc()): ?>
+                    <div class="col-4 col-md-2">
+                        <a href="peminjaman.php?cat=<?= $cat['id'] ?>" class="category-card p-3">
+                            <i class="fa-solid fa-<?= $cat['icon'] ?: 'box' ?> mb-2 d-block fs-4 text-primary opacity-75"></i>
+                            <h6 class="fw-bold text-dark mb-0" style="font-size: 0.7rem;"><?= $cat['nama_kategori'] ?></h6>
                         </a>
                     </div>
                     <?php endwhile; ?>
@@ -156,17 +189,27 @@ include 'layouts/header.php';
                         <a href="peminjaman.php" class="text-success small fw-bold text-decoration-none">Lihat Semua</a>
                     </div>
                     
-                    <?php if ($my_active->num_rows > 0): ?>
+                    <?php 
+                    // Pinjaman Saya (Update query untuk Ruangan)
+                    $my_active = $koneksi->query("SELECT p.*, a.nama_aset, k.nama_kategori, k.icon as kat_icon, r.nama_ruangan 
+                                                    FROM peminjaman p 
+                                                    LEFT JOIN aset a ON p.id_aset = a.id 
+                                                    LEFT JOIN kategori k ON a.id_kategori = k.id
+                                                    LEFT JOIN ruangan r ON p.id_ruangan = r.id
+                                                    WHERE p.id_user = $user_id 
+                                                    ORDER BY p.tgl_pinjam DESC, p.jam_mulai DESC LIMIT 5");
+                    
+                    if ($my_active->num_rows > 0): ?>
                         <div class="d-flex flex-column gap-3">
                             <?php while ($ma = $my_active->fetch_assoc()): ?>
                                 <div class="p-3 bg-light rounded-4 border border-white position-relative">
                                     <div class="d-flex align-items-center gap-3 mb-2">
-                                        <div class="bg-white text-success rounded-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 40px; height: 40px;">
-                                            <i class="fa-solid fa-<?= $ma['kat_icon'] ?: 'box' ?> small"></i>
+                                        <div class="bg-white text-<?= $ma['id_ruangan'] ? 'primary' : 'success' ?> rounded-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 40px; height: 40px;">
+                                            <i class="fa-solid fa-<?= $ma['id_ruangan'] ? 'door-open' : ($ma['kat_icon'] ?: 'box') ?> small"></i>
                                         </div>
                                         <div>
-                                            <div class="fw-bold text-dark small mb-0"><?= htmlspecialchars($ma['nama_aset']) ?></div>
-                                            <div class="text-muted" style="font-size: 0.65rem;"><?= htmlspecialchars($ma['nama_kategori']) ?></div>
+                                            <div class="fw-bold text-dark small mb-0"><?= htmlspecialchars($ma['id_aset'] ? $ma['nama_aset'] : $ma['nama_ruangan']) ?></div>
+                                            <div class="text-muted" style="font-size: 0.65rem;"><?= htmlspecialchars($ma['id_aset'] ? $ma['nama_kategori'] : 'Ruangan') ?></div>
                                         </div>
                                     </div>
                                     <div class="text-muted mb-2 ps-1" style="font-size: 0.7rem;">

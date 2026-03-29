@@ -14,6 +14,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $alamat = $koneksi->real_escape_string($_POST['alamat']);
     $sidebar_gradient = $koneksi->real_escape_string($_POST['sidebar_gradient']);
     $topbar_color = $koneksi->real_escape_string($_POST['topbar_color']);
+    $email_inv = $koneksi->real_escape_string($_POST['email_pengelola_inventaris']);
+    $email_ruang = $koneksi->real_escape_string($_POST['email_pengelola_ruangan']);
 
     $sql = "UPDATE profil_lembaga SET 
             nama_lembaga = '$nama', 
@@ -21,7 +23,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             telepon = '$telepon', 
             alamat = '$alamat',
             sidebar_gradient = '$sidebar_gradient',
-            topbar_color = '$topbar_color'
+            topbar_color = '$topbar_color',
+            email_pengelola_inventaris = '$email_inv',
+            email_pengelola_ruangan = '$email_ruang'
             LIMIT 1";
 
     if ($koneksi->query($sql)) {

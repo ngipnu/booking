@@ -1,0 +1,27 @@
+# ==============================
+# KEAMANAN - File Sensitif
+# ==============================
+# File konfigurasi database (JANGAN pernah di-commit)
+.env
+config/database.php
+
+# ==============================
+# SISTEM & EDITOR
+# ==============================
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ==============================
+# UPLOAD & MEDIA (opsional)
+# ==============================
+# Hapus tanda # jika ingin abaikan folder uploads juga
+# assets/uploads/
+
+# ==============================
+# LOG
+# ==============================
+*.log

@@ -27,12 +27,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['aksi'])) {
     $tahun_anggaran = $koneksi->real_escape_string($_POST['tahun_anggaran']);
     $tgl_beli = !empty($_POST['tgl_beli']) ? $koneksi->real_escape_string($_POST['tgl_beli']) : date('Y-m-d');
     $penanggung_jawab = $koneksi->real_escape_string($_POST['penanggung_jawab']);
+    $id_ruangan = !empty($_POST['id_ruangan']) ? (int)$_POST['id_ruangan'] : "NULL";
 
     if ($_POST['aksi'] == 'tambah') {
         $kode_aset = $koneksi->real_escape_string($_POST['kode_aset']);
         
-        $sql = "INSERT INTO aset (kode_aset, nama_aset, merk, warna, id_kategori, unit_pengguna, lokasi_simpan, divisi_pembeli, tahun_anggaran, toko_pembelian, kota_pembelian, harga_beli, tgl_beli, ada_garansi, garansi_sampai, kondisi, bisa_dipinjam, penanggung_jawab) 
-                VALUES ('$kode_aset', '$nama_aset', '$merk', '$warna', $id_kategori, '$unit_pengguna', '$lokasi_simpan', '$divisi_pembeli', '$tahun_anggaran', '$toko_pembelian', '$kota_pembelian', $harga_beli, '$tgl_beli', '$ada_garansi', ".($garansi_sampai?"'$garansi_sampai'":"NULL").", '$kondisi', '$bisa_dipinjam', '$penanggung_jawab')";
+        $sql = "INSERT INTO aset (kode_aset, nama_aset, merk, warna, id_kategori, id_ruangan, unit_pengguna, lokasi_simpan, divisi_pembeli, tahun_anggaran, toko_pembelian, kota_pembelian, harga_beli, tgl_beli, ada_garansi, garansi_sampai, kondisi, bisa_dipinjam, penanggung_jawab) 
+                VALUES ('$kode_aset', '$nama_aset', '$merk', '$warna', $id_kategori, $id_ruangan, '$unit_pengguna', '$lokasi_simpan', '$divisi_pembeli', '$tahun_anggaran', '$toko_pembelian', '$kota_pembelian', $harga_beli, '$tgl_beli', '$ada_garansi', ".($garansi_sampai?"'$garansi_sampai'":"NULL").", '$kondisi', '$bisa_dipinjam', '$penanggung_jawab')";
         
         if ($koneksi->query($sql)) {
             $_SESSION['pesan'] = "Aset '$nama_aset' berhasil diregistrasi.";
@@ -47,6 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['aksi'])) {
                 merk='$merk', 
                 warna='$warna', 
                 id_kategori=$id_kategori, 
+                id_ruangan=$id_ruangan,
                 unit_pengguna='$unit_pengguna', 
                 lokasi_simpan='$lokasi_simpan', 
                 divisi_pembeli='$divisi_pembeli',

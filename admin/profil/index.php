@@ -128,6 +128,20 @@ include '../layouts/sidebar.php';
                             </div>
                         </div>
 
+                        <h6 class="font-heading fw-bold text-dark mb-4 border-bottom pb-2 mt-5 text-start">Notifikasi Pengelola (Email)</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6 text-start">
+                                <label class="form-label small fw-bold text-muted">Email Pengelola Inventaris</label>
+                                <input type="email" name="email_pengelola_inventaris" class="form-control" value="<?= $profil['email_pengelola_inventaris'] ?>" placeholder="admin-inventaris@annadzir.sch.id">
+                                <div class="form-text small opacity-75">Menerima email jika ada pengajuan pinjam barang.</div>
+                            </div>
+                            <div class="col-md-6 text-start">
+                                <label class="form-label small fw-bold text-muted">Email Pengelola Ruangan</label>
+                                <input type="email" name="email_pengelola_ruangan" class="form-control" value="<?= $profil['email_pengelola_ruangan'] ?>" placeholder="admin-ruangan@annadzir.sch.id">
+                                <div class="form-text small opacity-75">Menerima email jika ada booking ruangan.</div>
+                            </div>
+                        </div>
+
                         <h6 class="font-heading fw-bold text-dark mb-4 border-bottom pb-2 mt-5 text-start">Konfigurasi Sistem</h6>
                         <div class="bg-primary-soft text-dark p-3 rounded-4 border border-white text-start">
                             <i class="fa-solid fa-circle-info me-1"></i> <span class="small fw-medium">Sistem saat ini dikonfigurasi untuk <strong>"Multi-User Sharing Account"</strong>. Peminjam diwajibkan mengisi Nama dan Unit secara manual.</span>

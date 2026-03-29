@@ -34,21 +34,7 @@ $primary_color = isset($matches[0]) ? $matches[0] : '#3b82f6';
         .offcanvas-sidebar {
             background: var(--sidebar-gradient) !important;
         }
-        .offcanvas-sidebar .sidebar-title {
-            color: rgba(255,255,255,0.9) !important;
-        }
-        .offcanvas-sidebar .nav-link.sidebar-link {
-            color: rgba(255,255,255,0.6) !important;
-        }
-        .offcanvas-sidebar .nav-link.sidebar-link:hover {
-            color: white !important;
-            background: rgba(255,255,255,0.1);
-        }
-        .offcanvas-sidebar .nav-link.sidebar-link.active {
-            background: white !important;
-            color: var(--primary-color) !important;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
+        
         /* Sidebar Branding */
         .offcanvas-sidebar a .text-dark, .offcanvas-sidebar a .fs-6 {
             color: white !important;
@@ -87,7 +73,32 @@ $primary_color = isset($matches[0]) ? $matches[0] : '#3b82f6';
         .fab-btn {
             background: var(--primary-gradient) !important;
         }
+
+        /* Modal & Offcanvas Fix */
+        .modal-backdrop {
+            z-index: 1050 !important;
+        }
+        .modal {
+            z-index: 1060 !important;
+        }
+        .offcanvas-backdrop {
+            z-index: 1070 !important;
+        }
+        .offcanvas {
+            z-index: 1080 !important;
+        }
+        /* Ensure glass effect doesn't trap clicks */
+        .glass-card {
+            position: relative;
+            z-index: 1;
+        }
+        .main-content {
+            position: relative;
+            z-index: 0;
+        }
     </style>
+    <!-- Bootstrap JS (Moved to Header for component availability) -->
+    <script src="../../assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 </head>
 <body class="bg-light" style="background-image: url('data:image/svg+xml,%3Csvg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Ccircle cx=\"20\" cy=\"20\" r=\"50\" fill=\"%23e0f2fe\" filter=\"blur(30px)\" opacity=\"0.6\"/%3E%3Ccircle cx=\"80\" cy=\"80\" r=\"50\" fill=\"%23e0e7ff\" filter=\"blur(30px)\" opacity=\"0.6\"/%3E%3Ccircle cx=\"80\" cy=\"20\" r=\"50\" fill=\"%23fce7f3\" filter=\"blur(30px)\" opacity=\"0.4\"/%3E%3C/svg%3E'); background-size: cover; background-attachment: fixed;">
     <div class="sidebar-overlay" id="sidebar-overlay"></div>

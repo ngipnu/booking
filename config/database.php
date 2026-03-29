@@ -49,14 +49,21 @@ $koneksi->query("CREATE TABLE IF NOT EXISTS profil_lembaga (
     alamat TEXT,
     telepon VARCHAR(20),
     sidebar_gradient VARCHAR(255) DEFAULT 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-    topbar_color VARCHAR(20) DEFAULT '#334155'
+    topbar_color VARCHAR(20) DEFAULT '#334155',
+    email_pengelola_inventaris VARCHAR(100) NULL,
+    email_pengelola_ruangan VARCHAR(100) NULL
 )");
 
-// Migrasi Profil: Tambah kolom tema jika belum ada
+// Migrasi Profil: Tambah kolom tema & email pengelola jika belum ada
 $check_p_theme = $koneksi->query("SHOW COLUMNS FROM profil_lembaga LIKE 'sidebar_gradient'");
 if ($check_p_theme->num_rows == 0) {
     $koneksi->query("ALTER TABLE profil_lembaga ADD COLUMN sidebar_gradient VARCHAR(255) DEFAULT 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' AFTER telepon");
     $koneksi->query("ALTER TABLE profil_lembaga ADD COLUMN topbar_color VARCHAR(20) DEFAULT '#334155' AFTER sidebar_gradient");
+}
+$check_p_emails = $koneksi->query("SHOW COLUMNS FROM profil_lembaga LIKE 'email_pengelola_inventaris'");
+if ($check_p_emails->num_rows == 0) {
+    $koneksi->query("ALTER TABLE profil_lembaga ADD COLUMN email_pengelola_inventaris VARCHAR(100) NULL AFTER topbar_color");
+    $koneksi->query("ALTER TABLE profil_lembaga ADD COLUMN email_pengelola_ruangan VARCHAR(100) NULL AFTER email_pengelola_inventaris");
 }
 
 $cek_profil = $koneksi->query("SELECT * FROM profil_lembaga");
@@ -128,6 +135,11 @@ $check_anggaran = $koneksi->query("SHOW COLUMNS FROM aset LIKE 'tahun_anggaran'"
 if ($check_anggaran->num_rows == 0) {
     $koneksi->query("ALTER TABLE aset ADD COLUMN tahun_anggaran VARCHAR(4) NULL AFTER garansi_sampai");
 }
+$check_a_ruangan = $koneksi->query("SHOW COLUMNS FROM aset LIKE 'id_ruangan'");
+if ($check_a_ruangan->num_rows == 0) {
+    $koneksi->query("ALTER TABLE aset ADD COLUMN id_ruangan INT NULL AFTER unit_pengguna");
+    $koneksi->query("ALTER TABLE aset ADD CONSTRAINT fk_aset_ruangan FOREIGN KEY (id_ruangan) REFERENCES ruangan(id) ON DELETE SET NULL");
+}
 $koneksi->query("ALTER TABLE aset MODIFY COLUMN kategori ENUM('kendaraan', 'ruangan', 'elektronik', 'mebel', 'lainnya') NULL");
 
 // Migrasi Peminjaman: Tambahkan kolom identitas peminjam real (untuk multi-user account)
@@ -147,11 +159,37 @@ if ($cek_aset->num_rows == 0) {
 }
 */
 
-// Tabel Peminjaman
+// Tabel Gedung
+$koneksi->query("CREATE TABLE IF NOT EXISTS gedung (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nama_gedung VARCHAR(100) NOT NULL,
+    deskripsi TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)");
+
+// Tabel Ruangan
+$koneksi->query("CREATE TABLE IF NOT EXISTS ruangan (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_gedung INT NOT NULL,
+    nama_ruangan VARCHAR(100) NOT NULL,
+    kode_ruangan VARCHAR(50) UNIQUE,
+    kapasitas INT DEFAULT 0,
+    fasilitas TEXT,
+    foto_ruangan VARCHAR(255) NULL,
+    bisa_dipinjam ENUM('Y', 'N') DEFAULT 'Y',
+    status ENUM('tersedia', 'dipakai', 'perbaikan') DEFAULT 'tersedia',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_gedung) REFERENCES gedung(id) ON DELETE CASCADE
+)");
+
+// Tabel Peminjaman (Update untuk mendukung Ruangan)
 $koneksi->query("CREATE TABLE IF NOT EXISTS peminjaman (
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_user INT NOT NULL,
-    id_aset INT NOT NULL,
+    id_aset INT NULL,
+    id_ruangan INT NULL,
+    nama_peminjam VARCHAR(100),
+    unit_peminjam VARCHAR(100),
     tgl_pengajuan DATETIME DEFAULT CURRENT_TIMESTAMP,
     tgl_pinjam DATE NOT NULL,
     tgl_kembali DATE NOT NULL,
@@ -161,8 +199,17 @@ $koneksi->query("CREATE TABLE IF NOT EXISTS peminjaman (
     status_pinjam ENUM('menunggu', 'disetujui', 'ditolak', 'selesai') DEFAULT 'menunggu',
     waktu_disetujui DATETIME NULL,
     FOREIGN KEY (id_user) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (id_aset) REFERENCES aset(id) ON DELETE CASCADE
+    FOREIGN KEY (id_aset) REFERENCES aset(id) ON DELETE CASCADE,
+    FOREIGN KEY (id_ruangan) REFERENCES ruangan(id) ON DELETE CASCADE
 )");
+
+// Migrasi Peminjaman: Tambah id_ruangan jika belum ada
+$check_p_ruang = $koneksi->query("SHOW COLUMNS FROM peminjaman LIKE 'id_ruangan'");
+if ($check_p_ruang->num_rows == 0) {
+    $koneksi->query("ALTER TABLE peminjaman ADD COLUMN id_ruangan INT NULL AFTER id_aset");
+    $koneksi->query("ALTER TABLE peminjaman ADD CONSTRAINT fk_ruangan FOREIGN KEY (id_ruangan) REFERENCES ruangan(id) ON DELETE CASCADE");
+}
+$koneksi->query("ALTER TABLE peminjaman MODIFY COLUMN id_aset INT NULL");
 
 // Migrasi Peminjaman: Tambah jam_mulai & jam_selesai jika belum ada
 $check_p_jam = $koneksi->query("SHOW COLUMNS FROM peminjaman LIKE 'jam_mulai'");

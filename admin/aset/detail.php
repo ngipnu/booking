@@ -10,9 +10,11 @@ if (!isset($_SESSION['login']) || $_SESSION['role'] !== 'admin') {
 }
 
 $id = $_GET['id'] ?? 0;
-$query = "SELECT a.*, k.nama_kategori, k.icon as kat_icon 
+$query = "SELECT a.*, k.nama_kategori, k.icon as kat_icon, r.nama_ruangan, g.nama_gedung 
           FROM aset a 
           LEFT JOIN kategori k ON a.id_kategori = k.id 
+          LEFT JOIN ruangan r ON a.id_ruangan = r.id
+          LEFT JOIN gedung g ON r.id_gedung = g.id
           WHERE a.id = '" . $koneksi->real_escape_string($id) . "'";
 $result = $koneksi->query($query);
 $aset = $result->fetch_assoc();
@@ -54,11 +56,8 @@ include '../layouts/sidebar.php';
                     <span class="badge bg-light text-muted border mb-3"><?= htmlspecialchars($aset['kode_aset']) ?></span>
                     
                     <div class="d-grid gap-2 mt-4">
-                        <button class="btn btn-primary rounded-pill fw-bold" data-bs-toggle="modal" data-bs-target="#modalEdit">
-                            <i class="fa-solid fa-pen-to-square me-2"></i> Edit Aset
-                        </button>
-                        <a href="proses.php?aksi=hapus&id=<?= $aset['id'] ?>" class="btn btn-outline-danger rounded-pill fw-bold" onclick="return confirm('Hapus aset ini secara permanen?')">
-                            <i class="fa-solid fa-trash me-2"></i> Hapus Aset
+                        <a href="index.php" class="btn btn-primary rounded-pill fw-bold">
+                            <i class="fa-solid fa-arrow-left me-2"></i> Kembali ke Daftar
                         </a>
                     </div>
 
@@ -97,8 +96,18 @@ include '../layouts/sidebar.php';
                             <p class="fw-bold border-bottom pb-2"><?= htmlspecialchars($aset['nama_kategori']) ?></p>
                         </div>
                         <div class="col-md-6">
-                            <label class="text-muted small d-block">Lokasi Simpan</label>
-                            <p class="fw-bold border-bottom pb-2"><?= htmlspecialchars($aset['lokasi_simpan']) ?> (<?= htmlspecialchars($aset['unit_pengguna']) ?>)</p>
+                            <label class="text-muted small d-block">Lokasi Fisik (Master)</label>
+                            <p class="fw-bold border-bottom pb-2">
+                                <?php if($aset['id_ruangan']): ?>
+                                    <span class="text-primary"><?= htmlspecialchars($aset['nama_ruangan']) ?></span> (<?= htmlspecialchars($aset['nama_gedung']) ?>)
+                                <?php else: ?>
+                                    -
+                                <?php endif; ?>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small d-block">Lokasi Simpan / Deskripsi</label>
+                            <p class="fw-bold border-bottom pb-2"><?= htmlspecialchars($aset['lokasi_simpan'] ?: '-') ?> (<?= htmlspecialchars($aset['unit_pengguna']) ?>)</p>
                         </div>
                     </div>
 

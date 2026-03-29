@@ -15,7 +15,7 @@ $filter_kategori = $_GET['kategori'] ?? '';
 $filter_unit = $_GET['unit'] ?? '';
 $filter_kondisi = $_GET['kondisi'] ?? '';
 
-$where_clauses = [];
+$where_clauses = ["(k.nama_kategori != 'Ruangan' OR k.nama_kategori IS NULL)"];
 if (!empty($filter_search)) {
     $search = $koneksi->real_escape_string($filter_search);
     $where_clauses[] = "(a.nama_aset LIKE '%$search%' OR a.kode_aset LIKE '%$search%' OR a.merk LIKE '%$search%')";
@@ -32,16 +32,21 @@ if (!empty($filter_kondisi)) {
 
 $where_sql = count($where_clauses) > 0 ? "WHERE " . implode(" AND ", $where_clauses) : "";
 
-// Ambil data aset dengan JOIN ke kategori + Filter
-$query_aset = "SELECT a.*, k.nama_kategori, k.icon as kat_icon 
+// Ambil data aset dengan JOIN ke kategori + Ruangan + Filter
+$query_aset = "SELECT a.*, k.nama_kategori, k.icon as kat_icon, r.nama_ruangan, g.nama_gedung 
                FROM aset a 
                LEFT JOIN kategori k ON a.id_kategori = k.id 
+               LEFT JOIN ruangan r ON a.id_ruangan = r.id
+               LEFT JOIN gedung g ON r.id_gedung = g.id
                $where_sql
                ORDER BY a.id DESC";
 $kumpulan_aset = $koneksi->query($query_aset);
 
-// Ambil semua kategori untuk dropdown
-$semua_kategori = $koneksi->query("SELECT * FROM kategori ORDER BY nama_kategori ASC");
+// Ambil semua ruangan untuk dropdown
+$lokasi_ruangan = $koneksi->query("SELECT r.*, g.nama_gedung FROM ruangan r JOIN gedung g ON r.id_gedung = g.id ORDER BY g.nama_gedung ASC, r.nama_ruangan ASC");
+
+// Ambil semua kategori untuk dropdown (Kecuali Ruangan)
+$semua_kategori = $koneksi->query("SELECT * FROM kategori WHERE nama_kategori != 'Ruangan' ORDER BY nama_kategori ASC");
 $kategori_list = [];
 while($k = $semua_kategori->fetch_assoc()) {
     $kategori_list[] = $k;
@@ -241,8 +246,8 @@ include '../layouts/sidebar.php';
     <div class="px-3 px-md-4 pb-5 animate-fade-up">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
             <div>
-                <h4 class="font-heading fw-bold text-dark mb-1">Manajemen Inventaris Detail</h4>
-                <p class="text-muted small mb-0">Pelacakan aset, kategori dinamis, dan garansi.</p>
+                <h4 class="font-heading fw-bold text-dark mb-1">Manajemen Barang & Inventaris</h4>
+                <p class="text-muted small mb-0">Kelola aset bergerak, barang habis pakai, dan inventaris lembaga lainnya.</p>
             </div>
             <div class="d-flex flex-wrap gap-2 header-actions">
                 <div class="btn-group shadow-sm rounded-pill overflow-hidden me-md-2" role="group">
@@ -329,14 +334,13 @@ include '../layouts/sidebar.php';
                         <th>Lokasi</th>
                         <th class="text-center">Kondisi</th>
                         <th>Nilai</th>
-                        <th class="text-end pe-4">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if ($kumpulan_aset && $kumpulan_aset->num_rows > 0): ?>
                         <?php while ($row = $kumpulan_aset->fetch_assoc()): ?>
-                        <tr class="cursor-pointer">
-                            <td class="px-4" data-label="Identitas" onclick="window.location='detail.php?id=<?= $row['id'] ?>'">
+                        <tr class="inventory-row cursor-pointer" data-json="<?= htmlspecialchars(json_encode($row)) ?>">
+                            <td class="px-4" data-label="Identitas">
                                 <div class="text-decoration-none d-flex align-items-center gap-3 group-item">
                                     <div class="bg-primary-soft text-primary rounded-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px; flex-shrink: 0;">
                                         <i class="fa-solid fa-<?= $row['kat_icon'] ? $row['kat_icon'] : 'box' ?> fs-5"></i>
@@ -353,7 +357,14 @@ include '../layouts/sidebar.php';
                             <td data-label="Lokasi">
                                 <div class="lh-sm">
                                     <div class="fw-medium text-dark small mb-1"><?= htmlspecialchars($row['unit_pengguna']) ?></div>
-                                    <div class="text-muted" style="font-size: 0.75rem;"><i class="fa-solid fa-location-dot me-1 opacity-50"></i> <?= htmlspecialchars($row['lokasi_simpan'] ? $row['lokasi_simpan'] : '-') ?></div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">
+                                        <i class="fa-solid fa-location-dot me-1 opacity-50"></i> 
+                                        <?php if($row['id_ruangan']): ?>
+                                            <span class="text-primary fw-bold"><?= htmlspecialchars($row['nama_ruangan']) ?></span> (<?= htmlspecialchars($row['nama_gedung']) ?>)
+                                        <?php else: ?>
+                                            <?= htmlspecialchars($row['lokasi_simpan'] ? $row['lokasi_simpan'] : '-') ?>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
                             </td>
                             <td class="text-center" data-label="Kondisi">
@@ -380,12 +391,6 @@ include '../layouts/sidebar.php';
                                 <div class="text-muted" style="font-size: 0.7rem;">
                                     Tgl: <?= date('d/m/y', strtotime($row['tgl_beli'])) ?> 
                                     <span class="badge bg-light text-muted border py-0 px-1 ms-1"><?= $row['tahun_anggaran'] ?></span>
-                                </div>
-                            </td>
-                            <td class="text-end pe-4">
-                                <div class="btn-group shadow-sm rounded-pill overflow-hidden border">
-                                    <button class="btn btn-sm btn-white px-3" data-bs-toggle="modal" data-bs-target="#modalEditAset<?= $row['id'] ?>"><i class="fa-solid fa-pen-to-square text-muted"></i></button>
-                                    <a href="proses.php?aksi=hapus&id=<?= $row['id'] ?>" class="btn btn-sm btn-white px-3" onclick="return confirm('Hapus aset ini?')"><i class="fa-solid fa-trash text-danger"></i></a>
                                 </div>
                             </td>
                         </tr>
@@ -498,8 +503,19 @@ include '../layouts/sidebar.php';
                             <input type="text" class="form-control" name="unit_pengguna" placeholder="e.g. SDIT An Nadzir" list="list-unit">
                         </div>
                         <div class="col-md-4 text-start">
-                            <label class="form-label small fw-bold text-muted">Lokasi / Ruangan Simpan</label>
-                            <input type="text" class="form-control" name="lokasi_simpan" placeholder="e.g. Ruang Kelas 3B" list="list-lokasi">
+                            <label class="form-label small fw-bold text-muted">Lokasi Ruangan (Master)</label>
+                            <select class="form-select" name="id_ruangan">
+                                <option value="">-- Manual / Belum Diset --</option>
+                                <?php 
+                                $lokasi_ruangan->data_seek(0);
+                                while($lr = $lokasi_ruangan->fetch_assoc()): ?>
+                                    <option value="<?= $lr['id'] ?>"><?= $lr['nama_ruangan'] ?> (<?= $lr['nama_gedung'] ?>)</option>
+                                <?php endwhile; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-4 text-start">
+                            <label class="form-label small fw-bold text-muted">Lokasi Spesifik (Opsional)</label>
+                            <input type="text" class="form-control" name="lokasi_simpan" placeholder="e.g. Di Atas Meja/Pojok" list="list-lokasi">
                         </div>
                         <div class="col-md-8 text-start">
                             <label class="form-label small fw-bold text-muted">Penanggung Jawab / Pengelola</label>
@@ -664,85 +680,143 @@ function toggleView(view) {
         localStorage.setItem('inventory-view', 'list');
     }
 }
+</script>
 
-<?php if (isset($list_data_aset)): foreach($list_data_aset as $row): ?>
-<!-- Modal Edit Aset -->
-<div class="modal fade" id="modalEditAset<?= $row['id'] ?>" tabindex="-1" aria-hidden="true">
+<!-- Flyout Action (Modern Sidebar Flyout) -->
+<div class="offcanvas offcanvas-end border-0 shadow-lg glass-effect" tabindex="-1" id="flyoutAset" aria-labelledby="flyoutAsetLabel" style="width: 400px; background: rgba(255,255,255,0.8) !important; backdrop-filter: blur(20px) !important;">
+    <div class="offcanvas-header border-bottom px-4 py-3">
+        <h5 class="offcanvas-title font-heading fw-bold" id="flyoutAsetLabel">Detail & Aksi</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body p-4">
+        <!-- Quick Info -->
+        <div id="flyout-content">
+            <div class="text-center mb-4">
+                <div class="bg-primary-soft text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3 shadow-sm" style="width: 80px; height: 80px;">
+                    <i id="flyout-icon" class="fa-solid fa-box fs-1"></i>
+                </div>
+                <h4 id="flyout-nama" class="fw-bold text-dark mb-1">-</h4>
+                <p id="flyout-kode" class="text-muted small mb-0">-</p>
+            </div>
+
+            <div class="list-group list-group-flush rounded-4 overflow-hidden border">
+                <div class="list-group-item p-3 border-0 bg-light-soft">
+                    <div class="small text-muted mb-1 text-uppercase fw-bold" style="font-size: 0.65rem;">Lokasi Saat Ini</div>
+                    <div id="flyout-lokasi" class="fw-bold text-dark">-</div>
+                </div>
+                <div class="list-group-item p-3 border-0 bg-light-soft">
+                    <div class="small text-muted mb-1 text-uppercase fw-bold" style="font-size: 0.65rem;">Penanggung Jawab</div>
+                    <div id="flyout-pj" class="fw-bold text-dark">-</div>
+                </div>
+                <div class="list-group-item p-3 border-0 bg-light-soft">
+                    <div class="small text-muted mb-1 text-uppercase fw-bold" style="font-size: 0.65rem;">Kondisi Barang</div>
+                    <div id="flyout-kondisi" class="fw-bold text-dark">-</div>
+                </div>
+            </div>
+
+            <div class="mt-5 d-grid gap-3">
+                <a id="flyout-link-detail" href="#" class="btn btn-outline-primary rounded-pill py-2 fw-bold">
+                    <i class="fa-solid fa-circle-info me-2"></i> Lihat Detail Lengkap
+                </a>
+                <button type="button" class="btn btn-primary rounded-pill py-2 fw-bold shadow-sm" onclick="triggerEditFromFlyout()">
+                    <i class="fa-solid fa-pen-to-square me-2"></i> Edit Data Inventaris
+                </button>
+                <button type="button" class="btn btn-danger-soft text-danger rounded-pill py-2 fw-bold" onclick="triggerDeleteFromFlyout()">
+                    <i class="fa-solid fa-trash-can me-2"></i> Hapus Inventaris
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edit Aset (Universal - Single Modal) -->
+<div class="modal fade" id="modalEditUniversal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content glass-effect">
             <div class="modal-header border-0 px-4 pt-4">
-                <h5 class="modal-title font-heading fw-bold">Edit Aset: <?= htmlspecialchars($row['nama_aset']) ?></h5>
+                <h5 class="modal-title font-heading fw-bold">Update Data Inventaris</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="proses.php" method="POST">
+            <form action="proses.php" method="POST" id="formEditAset">
                 <input type="hidden" name="aksi" value="edit">
-                <input type="hidden" name="id" value="<?= $row['id'] ?>">
+                <input type="hidden" name="id" id="edit-id">
                 <div class="modal-body px-4 py-3 text-start">
                     <div class="row g-3">
                         <div class="col-md-3">
                             <label class="form-label small fw-bold text-muted">Kode Inventaris</label>
-                            <input type="text" class="form-control" name="kode_aset" value="<?= $row['kode_aset'] ?>" required>
+                            <input type="text" class="form-control" name="kode_aset" id="edit-kode" required>
                         </div>
                         <div class="col-md-9">
                             <label class="form-label small fw-bold text-muted">Nama Barang / Ruangan</label>
-                            <input type="text" class="form-control" name="nama_aset" value="<?= htmlspecialchars($row['nama_aset']) ?>" required>
+                            <input type="text" class="form-control" name="nama_aset" id="edit-nama" required>
                         </div>
                         
                         <div class="col-md-4">
                             <label class="form-label small fw-bold text-muted">Kategori</label>
-                            <select class="form-select" name="id_kategori">
+                            <select class="form-select" name="id_kategori" id="edit-kategori">
                                 <?php foreach($kategori_list as $kat): ?>
-                                    <option value="<?= $kat['id'] ?>" <?= $row['id_kategori'] == $kat['id'] ? 'selected' : '' ?>><?= $kat['nama_kategori'] ?></option>
+                                    <option value="<?= $kat['id'] ?>" data-nama="<?= strtolower($kat['nama_kategori']) ?>"><?= $kat['nama_kategori'] ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label small fw-bold text-muted">Merk</label>
-                            <input type="text" class="form-control" name="merk" value="<?= htmlspecialchars($row['merk']) ?>">
+                            <input type="text" class="form-control" name="merk" id="edit-merk">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label small fw-bold text-muted">Warna</label>
-                            <input type="text" class="form-control" name="warna" value="<?= htmlspecialchars($row['warna']) ?>">
+                            <input type="text" class="form-control" name="warna" id="edit-warna">
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label small fw-bold text-muted">Unit Pengguna</label>
-                            <input type="text" class="form-control" name="unit_pengguna" value="<?= htmlspecialchars($row['unit_pengguna']) ?>" list="list-unit">
+                            <input type="text" class="form-control" name="unit_pengguna" id="edit-unit" list="list-unit">
                         </div>
                         <div class="col-md-4 text-start">
-                            <label class="form-label small fw-bold text-muted">Lokasi Simpan</label>
-                            <input type="text" class="form-control" name="lokasi_simpan" value="<?= htmlspecialchars($row['lokasi_simpan']) ?>" list="list-lokasi">
+                            <label class="form-label small fw-bold text-muted">Lokasi Ruangan (Master)</label>
+                            <select class="form-select" name="id_ruangan" id="edit-id_ruangan">
+                                <option value="">-- Manual / Belum Diset --</option>
+                                <?php 
+                                $lokasi_ruangan->data_seek(0);
+                                while($lr = $lokasi_ruangan->fetch_assoc()): ?>
+                                    <option value="<?= $lr['id'] ?>"><?= $lr['nama_ruangan'] ?> (<?= $lr['nama_gedung'] ?>)</option>
+                                <?php endwhile; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-4 text-start">
+                            <label class="form-label small fw-bold text-muted">Lokasi Spesifik (Opsional)</label>
+                            <input type="text" class="form-control" name="lokasi_simpan" id="edit-lokasi-simpan" list="list-lokasi">
                         </div>
                         <div class="col-md-8 text-start">
                             <label class="form-label small fw-bold text-muted">Penanggung Jawab / Pengelola</label>
-                            <input type="text" class="form-control" name="penanggung_jawab" value="<?= htmlspecialchars($row['penanggung_jawab']) ?>" placeholder="Nama Pengelola">
+                            <input type="text" class="form-control" name="penanggung_jawab" id="edit-pj">
                         </div>
                         <div class="col-md-4 text-start">
                             <label class="form-label small fw-bold text-muted">Status Pinjam (Publik)</label>
-                            <select class="form-select" name="bisa_dipinjam">
-                                <option value="Y" <?= $row['bisa_dipinjam'] == 'Y' ? 'selected' : '' ?>>🌐 Bisa Dipinjam</option>
-                                <option value="N" <?= $row['bisa_dipinjam'] == 'N' ? 'selected' : '' ?>>🔒 Internal Saja</option>
+                            <select class="form-select" name="bisa_dipinjam" id="edit-bisa-dipinjam">
+                                <option value="Y">🌐 Bisa Dipinjam</option>
+                                <option value="N">🔒 Internal Saja</option>
                             </select>
                         </div>
                         
                         <div class="row g-3 p-0 m-0 finance-edit-section mt-2">
                             <div class="col-md-4">
                                 <label class="form-label small fw-bold text-muted">Kondisi</label>
-                                <select class="form-select" name="kondisi">
-                                    <option value="baik" <?= $row['kondisi'] == 'baik' ? 'selected' : '' ?>>✅ Baik</option>
-                                    <option value="rusak_ringan" <?= $row['kondisi'] == 'rusak_ringan' ? 'selected' : '' ?>>⚠️ Rusak Ringan</option>
-                                    <option value="rusak_berat" <?= $row['kondisi'] == 'rusak_berat' ? 'selected' : '' ?>>❌ Rusak Berat</option>
+                                <select class="form-select" name="kondisi" id="edit-kondisi">
+                                    <option value="baik">✅ Baik</option>
+                                    <option value="rusak_ringan">⚠️ Rusak Ringan</option>
+                                    <option value="rusak_berat">❌ Rusak Berat</option>
                                 </select>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label small fw-bold text-muted">Harga Beli</label>
-                                <input type="number" class="form-control" name="harga_beli" value="<?= (int)$row['harga_beli'] ?>">
+                                <input type="number" class="form-control" name="harga_beli" id="edit-harga">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label small fw-bold text-muted">Ada Garansi?</label>
-                                <select class="form-select" name="ada_garansi" id="edit_ada_garansi_<?= $row['id'] ?>">
-                                    <option value="N" <?= $row['ada_garansi'] == 'N' ? 'selected' : '' ?>>Tidak Ada</option>
-                                    <option value="Y" <?= $row['ada_garansi'] == 'Y' ? 'selected' : '' ?>>Ya, Bergaransi</option>
+                                <select class="form-select" name="ada_garansi" id="edit-ada-garansi">
+                                    <option value="N">Tidak Ada</option>
+                                    <option value="Y">Ya, Bergaransi</option>
                                 </select>
                             </div>
                         </div>
@@ -750,48 +824,138 @@ function toggleView(view) {
                 </div>
                 <div class="modal-footer border-0 px-4 pb-4">
                     <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold">Update Aset</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold">Update Data</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
-<?php endforeach; endif; ?>
 
+<script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Restore View Preference
+    // Always default to list view. Only use saved preference if explicitly set to 'grid'.
     const savedView = localStorage.getItem('inventory-view');
-    if (savedView) toggleView(savedView);
+    toggleView(savedView === 'grid' ? 'grid' : 'list');
     // Check for showModal param
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('showModal') === 'tambah') {
         const myModal = new bootstrap.Modal(document.getElementById('modalTambahAset'));
         myModal.show();
     }
+    // Inventory Row Clicks (Using Event Delegation for better reliability)
+    const tableContainer = document.getElementById('table-container');
+    if (tableContainer) {
+        tableContainer.addEventListener('click', function(e) {
+            const row = e.target.closest('.inventory-row');
+            if (!row) return;
 
+            // Prevent if clicking specific buttons or links inside
+            if (e.target.closest('button, a')) return;
+            
+            try {
+                const data = JSON.parse(row.getAttribute('data-json'));
+                openActionFlyout(data);
+            } catch (err) {
+                console.error("Error parsing row data:", err);
+            }
+        });
+    }
+});
+
+let currentSelectedAset = null;
+
+function openActionFlyout(data) {
+    currentSelectedAset = data;
+    
+    // Populate Flyout
+    document.getElementById('flyout-nama').textContent = data.nama_aset;
+    document.getElementById('flyout-kode').textContent = data.kode_aset;
+    document.getElementById('flyout-pj').textContent = data.penanggung_jawab || '-';
+    document.getElementById('flyout-kondisi').textContent = (data.kondisi || 'Baik').toUpperCase().replace('_', ' ');
+    document.getElementById('flyout-icon').className = 'fa-solid fa-' + (data.kat_icon || 'box') + ' fs-1';
+    
+    let lokasiText = data.nama_ruangan ? `${data.nama_ruangan} (${data.nama_gedung})` : (data.lokasi_simpan || '-');
+    document.getElementById('flyout-lokasi').textContent = lokasiText;
+    
+    document.getElementById('flyout-link-detail').href = 'detail.php?id=' + data.id;
+
+    // Show Offcanvas
+    const flyoutEl = document.getElementById('flyoutAset');
+    const flyout = bootstrap.Offcanvas.getOrCreateInstance(flyoutEl);
+    flyout.show();
+}
+
+function triggerEditFromFlyout() {
+    if (!currentSelectedAset) return;
+    
+    const data = currentSelectedAset;
+    
+    // Populate Modal Edit
+    document.getElementById('edit-id').value = data.id;
+    document.getElementById('edit-kode').value = data.kode_aset;
+    document.getElementById('edit-nama').value = data.nama_aset;
+    document.getElementById('edit-kategori').value = data.id_kategori;
+    document.getElementById('edit-merk').value = data.merk;
+    document.getElementById('edit-warna').value = data.warna;
+    document.getElementById('edit-unit').value = data.unit_pengguna;
+    document.getElementById('edit-lokasi-simpan').value = data.lokasi_simpan;
+    document.getElementById('edit-id_ruangan').value = data.id_ruangan || '';
+    document.getElementById('edit-pj').value = data.penanggung_jawab;
+    document.getElementById('edit-bisa-dipinjam').value = data.bisa_dipinjam;
+    document.getElementById('edit-kondisi').value = data.kondisi;
+    document.getElementById('edit-harga').value = data.harga_beli;
+    document.getElementById('edit-ada-garansi').value = data.ada_garansi;
+
+    // Close Flyout first
+    const flyout = bootstrap.Offcanvas.getInstance(document.getElementById('flyoutAset'));
+    if (flyout) flyout.hide();
+
+    // Show Modal
+    setTimeout(() => {
+        const modalEdit = new bootstrap.Modal(document.getElementById('modalEditUniversal'));
+        modalEdit.show();
+    }, 500);
+}
+
+function triggerDeleteFromFlyout() {
+    if (!currentSelectedAset) return;
+    if (confirm('Yakin ingin menghapus data ini?')) {
+        window.location = 'proses.php?aksi=hapus&id=' + currentSelectedAset.id;
+    }
+}
+
+function selectCategoryAndOpenAdd(id, name) {
+    const modalPilih = bootstrap.Modal.getInstance(document.getElementById('modalPilihKategori'));
+    if (modalPilih) modalPilih.hide();
+    
+    setTimeout(() => {
+        const selectKat = document.querySelector('#modalTambahAset select[name="id_kategori"]');
+        if (selectKat) {
+            selectKat.value = id;
+            selectKat.dispatchEvent(new Event('change'));
+        }
+        const myModal = new bootstrap.Modal(document.getElementById('modalTambahAset'));
+        myModal.show();
+    }, 400);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
     // Auto-calculate Warranty
     document.querySelectorAll('.select-duration').forEach(select => {
         select.addEventListener('change', function() {
             const months = parseInt(this.value);
             if (!months) return;
-            
             const targetId = this.getAttribute('data-target');
             const sourceId = this.getAttribute('data-source');
-            
             const sourceInput = document.getElementById(sourceId);
             const targetInput = document.getElementById(targetId);
-
             if (sourceInput && sourceInput.value) {
                 let date = new Date(sourceInput.value);
                 date.setMonth(date.getMonth() + months);
-                
-                // Format YYYY-MM-DD
                 const y = date.getFullYear();
                 const m = String(date.getMonth() + 1).padStart(2, '0');
                 const d = String(date.getDate()).padStart(2, '0');
                 targetInput.value = `${y}-${m}-${d}`;
-
-                // Toggle warranty status to 'Y' if duration selected
                 const adaGaransiId = targetId.includes('edit') ? targetId.replace('garansi_sampai', 'ada_garansi') : 'add_ada_garansi';
                 const elAda = document.getElementById(adaGaransiId);
                 if (elAda) elAda.value = 'Y';
@@ -805,57 +969,21 @@ document.addEventListener('DOMContentLoaded', function() {
             const selectedOption = select.options[select.selectedIndex];
             const selectedText = (selectedOption.getAttribute('data-nama') || selectedOption.textContent || '').toLowerCase();
             const modalBody = select.closest('.modal-body');
-            
             if (!modalBody) return;
-
             const inputMerk = modalBody.querySelector('input[name="merk"]');
             const inputWarna = modalBody.querySelector('input[name="warna"]');
-            const financeSection = modalBody.querySelector('#finance-section-add') || modalBody.querySelector('.row.g-3.mt-2'); // Simple check for finance sub-row
-
+            const financeSection = modalBody.querySelector('#finance-section-add');
+            const editFinanceRow = modalBody.querySelector('.finance-edit-section');
             const isRoom = selectedText.includes('ruang') || selectedText.includes('bangunan') || selectedText.includes('fasilitas') || selectedText.includes('umum');
-
-            if (inputMerk && inputMerk.parentElement) {
-                inputMerk.parentElement.style.display = isRoom ? 'none' : 'block';
-            }
-            if (inputWarna && inputWarna.parentElement) {
-                inputWarna.parentElement.style.display = isRoom ? 'none' : 'block';
-            }
-            
-            // Sembunyikan Bagian Keuangan/Garansi jika Kategori Ruangan/Fasilitas
-            const financeRow = modalBody.querySelector('#finance-section-add') || modalBody.querySelectorAll('.col-md-4')[3]?.parentElement; 
-            // Better to wrap the finance section in edit modal too or find it specifically
-            const editFinanceRow = modalBody.querySelector('.finance-edit-section'); // I should add this class
-            
-            if (financeSection) {
-                financeSection.style.display = isRoom ? 'none' : 'flex';
-            }
-            if (editFinanceRow) {
-                editFinanceRow.style.display = isRoom ? 'none' : 'flex';
-            }
+            if (inputMerk && inputMerk.parentElement) inputMerk.parentElement.style.display = isRoom ? 'none' : 'block';
+            if (inputWarna && inputWarna.parentElement) inputWarna.parentElement.style.display = isRoom ? 'none' : 'block';
+            if (financeSection) financeSection.style.display = isRoom ? 'none' : 'flex';
+            if (editFinanceRow) editFinanceRow.style.display = isRoom ? 'none' : 'flex';
         };
-
         select.addEventListener('change', toggleFields);
         toggleFields();
     });
 });
-
-function selectCategoryAndOpenAdd(id, name) {
-    const modalPilih = bootstrap.Modal.getInstance(document.getElementById('modalPilihKategori'));
-    modalPilih.hide();
-    
-    setTimeout(() => {
-        const selectKat = document.querySelector('#modalTambahAset select[name="id_kategori"]');
-        if (selectKat) {
-            selectKat.value = id;
-            // Trigger change event to update fields
-            const event = new Event('change');
-            selectKat.dispatchEvent(event);
-        }
-        
-        const myModal = new bootstrap.Modal(document.getElementById('modalTambahAset'));
-        myModal.show();
-    }, 400);
-}
 </script>
 
 <?php include '../layouts/footer.php'; ?>

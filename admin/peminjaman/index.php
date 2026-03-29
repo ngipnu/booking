@@ -10,10 +10,11 @@ if (!isset($_SESSION['login']) || $_SESSION['role'] !== 'admin') {
 }
 
 // Ambil data peminjaman
-$query = "SELECT p.*, u.nama, a.nama_aset, a.kode_aset 
+$query = "SELECT p.*, u.nama, a.nama_aset, a.kode_aset, r.nama_ruangan, r.kode_ruangan as kode_r 
           FROM peminjaman p 
           JOIN users u ON p.id_user = u.id 
-          JOIN aset a ON p.id_aset = a.id 
+          LEFT JOIN aset a ON p.id_aset = a.id 
+          LEFT JOIN ruangan r ON p.id_ruangan = r.id 
           ORDER BY p.tgl_pengajuan DESC";
 $result = $koneksi->query($query);
 
@@ -56,8 +57,13 @@ include '../layouts/sidebar.php';
                                 <div class="text-muted small"><?= htmlspecialchars($row['unit_peminjam'] ? $row['unit_peminjam'] : 'Unit LRC/Umum') ?></div>
                             </td>
                             <td>
-                                <div class="fw-medium text-dark"><?= htmlspecialchars($row['nama_aset']) ?></div>
-                                <div class="badge bg-light text-muted border py-0 px-2" style="font-size: 0.65rem;"><?= $row['kode_aset'] ?></div>
+                                <?php if($row['id_aset']): ?>
+                                    <div class="fw-medium text-dark"><?= htmlspecialchars($row['nama_aset']) ?></div>
+                                    <div class="badge bg-light text-muted border py-0 px-2" style="font-size: 0.65rem;"><?= $row['kode_aset'] ?></div>
+                                <?php else: ?>
+                                    <div class="fw-medium text-dark"><?= htmlspecialchars($row['nama_ruangan']) ?></div>
+                                    <div class="badge bg-primary-soft text-primary border py-0 px-2" style="font-size: 0.65rem;"><i class="fa-solid fa-hotel me-1"></i><?= $row['kode_r'] ?></div>
+                                <?php endif; ?>
                             </td>
                             <td>
                                 <div class="small text-dark"><?= date('d/m/Y', strtotime($row['tgl_pinjam'])) ?></div>

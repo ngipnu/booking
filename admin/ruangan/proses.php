@@ -1,0 +1,73 @@
+<?php
+session_start();
+require_once '../../config/database.php';
+
+if (!isset($_SESSION['login']) || $_SESSION['role'] !== 'admin') {
+    header("Location: ../../login.php");
+    exit;
+}
+
+$aksi = $_POST['aksi'] ?? $_GET['aksi'] ?? '';
+
+if ($aksi == 'tambah') {
+    $nama_ruangan = $koneksi->real_escape_string($_POST['nama_ruangan']);
+    $kode_ruangan = $koneksi->real_escape_string($_POST['kode_ruangan']);
+    $id_gedung = $koneksi->real_escape_string($_POST['id_gedung']);
+    $kapasitas = $koneksi->real_escape_string($_POST['kapasitas']);
+    $bisa_dipinjam = $koneksi->real_escape_string($_POST['bisa_dipinjam']);
+    $fasilitas = $koneksi->real_escape_string($_POST['fasilitas']);
+    $penanggung_jawab = $koneksi->real_escape_string($_POST['penanggung_jawab'] ?? '');
+    $kontak_pj = $koneksi->real_escape_string($_POST['kontak_pj'] ?? '');
+
+    $query = "INSERT INTO ruangan (nama_ruangan, kode_ruangan, id_gedung, kapasitas, bisa_dipinjam, fasilitas, penanggung_jawab, kontak_pj) 
+              VALUES ('$nama_ruangan', '$kode_ruangan', '$id_gedung', '$kapasitas', '$bisa_dipinjam', '$fasilitas', '$penanggung_jawab', '$kontak_pj')";
+    if ($koneksi->query($query)) {
+        $_SESSION['pesan'] = "Ruangan baru berhasil ditambahkan.";
+    } else {
+        $_SESSION['pesan'] = "Gagal menambah ruangan: " . $koneksi->error;
+    }
+    header("Location: index.php");
+    exit;
+} 
+
+elseif ($aksi == 'edit') {
+    $id = $_POST['id'];
+    $nama_ruangan = $koneksi->real_escape_string($_POST['nama_ruangan']);
+    $kode_ruangan = $koneksi->real_escape_string($_POST['kode_ruangan']);
+    $id_gedung = $koneksi->real_escape_string($_POST['id_gedung']);
+    $kapasitas = $koneksi->real_escape_string($_POST['kapasitas']);
+    $bisa_dipinjam = $koneksi->real_escape_string($_POST['bisa_dipinjam']);
+    $fasilitas = $koneksi->real_escape_string($_POST['fasilitas']);
+    $penanggung_jawab = $koneksi->real_escape_string($_POST['penanggung_jawab'] ?? '');
+    $kontak_pj = $koneksi->real_escape_string($_POST['kontak_pj'] ?? '');
+
+    $query = "UPDATE ruangan SET 
+              nama_ruangan = '$nama_ruangan', 
+              kode_ruangan = '$kode_ruangan', 
+              id_gedung = '$id_gedung', 
+              kapasitas = '$kapasitas', 
+              bisa_dipinjam = '$bisa_dipinjam', 
+              fasilitas = '$fasilitas',
+              penanggung_jawab = '$penanggung_jawab',
+              kontak_pj = '$kontak_pj'
+              WHERE id = '$id'";
+    if ($koneksi->query($query)) {
+        $_SESSION['pesan'] = "Data ruangan berhasil diperbarui.";
+    } else {
+        $_SESSION['pesan'] = "Gagal memperbarui ruangan: " . $koneksi->error;
+    }
+    header("Location: index.php");
+    exit;
+} 
+
+elseif ($aksi == 'hapus') {
+    $id = $_GET['id'];
+    $query = "DELETE FROM ruangan WHERE id = '$id'";
+    if ($koneksi->query($query)) {
+        $_SESSION['pesan'] = "Ruangan berhasil dihapus.";
+    } else {
+        $_SESSION['pesan'] = "Gagal menghapus ruangan: " . $koneksi->error;
+    }
+    header("Location: index.php");
+    exit;
+}
