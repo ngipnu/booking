@@ -38,11 +38,13 @@ function kirimEmail($to, string $subject, string $body): bool
         $mail->isSMTP();
         $mail->Host       = MAIL_HOST;
         $mail->SMTPAuth   = true;
+        $mail->AuthType   = 'LOGIN';   // Brevo wajib LOGIN, bukan CRAM-MD5
         $mail->Username   = MAIL_USERNAME;
         $mail->Password   = MAIL_PASSWORD;
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = MAIL_PORT;
         $mail->CharSet    = 'UTF-8';
+        $mail->Timeout    = 15;
 
         // Pengirim
         $mail->setFrom(MAIL_FROM, MAIL_FROM_NAME);
