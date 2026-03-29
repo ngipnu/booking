@@ -29,8 +29,13 @@ $current_page = basename(dirname($_SERVER['PHP_SELF']));
             </a>
         </li>
         <li class="nav-item">
-            <a href="../peminjaman/index.php" class="nav-link sidebar-link <?= ($current_page == 'peminjaman') ? 'active' : '' ?>">
-                <i class="fa-solid fa-hand-holding-hand"></i> <span>Peminjaman</span>
+            <a href="../peminjaman/index.php" class="nav-link sidebar-link <?= ($current_page == 'peminjaman' && basename($_SERVER['PHP_SELF']) == 'index.php') ? 'active' : '' ?>">
+                <i class="fa-solid fa-hand-holding-hand"></i> <span>Daftar Pinjam</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="../peminjaman/jadwal.php" class="nav-link sidebar-link <?= (basename($_SERVER['PHP_SELF']) == 'jadwal.php') ? 'active' : '' ?>">
+                <i class="fa-solid fa-calendar-day"></i> <span>Jadwal Pinjam</span>
             </a>
         </li>
         <li class="nav-item mt-4 mb-2 px-3 text-uppercase fw-bold text-muted" style="font-size: 0.7rem;">Pengaturan</li>

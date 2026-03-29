@@ -21,11 +21,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['aksi'])) {
     $kota_pembelian = $koneksi->real_escape_string($_POST['kota_pembelian']);
     $harga_beli = (float) $_POST['harga_beli'];
     $kondisi = isset($_POST['kondisi']) ? $koneksi->real_escape_string($_POST['kondisi']) : 'baik';
-    $bisa_dipinjam = $koneksi->real_escape_string($_POST['bisa_dipinjam']);
-    $ada_garansi = $koneksi->real_escape_string($_POST['ada_garansi']);
-    $garansi_sampai = $_POST['garansi_sampai'] ? $_POST['garansi_sampai'] : NULL;
+    $bisa_dipinjam = isset($_POST['bisa_dipinjam']) ? $koneksi->real_escape_string($_POST['bisa_dipinjam']) : 'Y';
+    $ada_garansi = isset($_POST['ada_garansi']) ? $koneksi->real_escape_string($_POST['ada_garansi']) : 'N';
+    $garansi_sampai = !empty($_POST['garansi_sampai']) ? $_POST['garansi_sampai'] : NULL;
     $tahun_anggaran = $koneksi->real_escape_string($_POST['tahun_anggaran']);
-    $tgl_beli = $_POST['tgl_beli'] ? $koneksi->real_escape_string($_POST['tgl_beli']) : date('Y-m-d');
+    $tgl_beli = !empty($_POST['tgl_beli']) ? $koneksi->real_escape_string($_POST['tgl_beli']) : date('Y-m-d');
 
     if ($_POST['aksi'] == 'tambah') {
         $kode_aset = $koneksi->real_escape_string($_POST['kode_aset']);
@@ -48,10 +48,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['aksi'])) {
                 id_kategori=$id_kategori, 
                 unit_pengguna='$unit_pengguna', 
                 lokasi_simpan='$lokasi_simpan', 
+                divisi_pembeli='$divisi_pembeli',
+                tahun_anggaran='$tahun_anggaran',
                 toko_pembelian='$toko_pembelian', 
                 kota_pembelian='$kota_pembelian', 
                 harga_beli=$harga_beli, 
-                tahun_anggaran='$tahun_anggaran',
                 tgl_beli='$tgl_beli',
                 ada_garansi='$ada_garansi',
                 garansi_sampai=".($garansi_sampai?"'$garansi_sampai'":"NULL").",
@@ -61,6 +62,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['aksi'])) {
         
         if ($koneksi->query($sql)) {
             $_SESSION['pesan'] = "Data inventaris berhasil diperbarui.";
+        } else {
+            $_SESSION['pesan_error'] = "Gagal memperbarui data: " . $koneksi->error;
         }
     }
 
@@ -87,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['aksi'])) {
 
                 $sql = "INSERT INTO aset (kode_aset, nama_aset, merk, warna, unit_pengguna, lokasi_simpan, harga_beli, tahun_anggaran, tgl_beli, kondisi, status) 
                         VALUES ('$kode', '$nama', '$merk', '$warna', '$unit', '$lokasi', $harga, '$tahun', '$tgl_skrg', 'baik', 'tersedia') 
-                        ON DUPLICATE KEY UPDATE nama_aset='$nama', harga_beli=$harga";
+                        ON DUPLICATE KEY UPDATE nama_aset='$nama', merk='$merk', warna='$warna', harga_beli=$harga, tahun_anggaran='$tahun'";
                 
                 if ($koneksi->query($sql)) $success++;
             }

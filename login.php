@@ -15,10 +15,11 @@ if (isset($_SESSION['login'])) {
 $error = '';
 
 if (isset($_POST['login'])) {
-    $niy = $koneksi->real_escape_string($_POST['niy']);
+    $username = $koneksi->real_escape_string($_POST['username']);
     $password = $_POST['password'];
 
-    $result = $koneksi->query("SELECT * FROM users WHERE niy = '$niy'");
+    // Cek berdasarkan Username ATAU NIY (untuk kompatibilitas)
+    $result = $koneksi->query("SELECT * FROM users WHERE username = '$username' OR niy = '$username'");
 
     if ($result->num_rows === 1) {
         $row = $result->fetch_assoc();
@@ -26,8 +27,9 @@ if (isset($_POST['login'])) {
         if (password_verify($password, $row['password'])) {
             $_SESSION['login'] = true;
             $_SESSION['user_id'] = $row['id'];
+            $_SESSION['id_user'] = $row['id']; // Kompatibilitas dengan script admin
             $_SESSION['nama'] = $row['nama'];
-            $_SESSION['niy'] = $row['niy'];
+            $_SESSION['username'] = $row['username'];
             $_SESSION['role'] = $row['role'];
 
             if ($row['role'] == 'admin') {
@@ -40,7 +42,7 @@ if (isset($_POST['login'])) {
             $error = "Kata sandi salah.";
         }
     } else {
-        $error = "NIY tidak ditemukan atau akun belum terdaftar.";
+        $error = "Username tidak ditemukan atau akun belum terdaftar.";
     }
 }
 ?>
@@ -93,11 +95,11 @@ if (isset($_POST['login'])) {
                         <?php endif; ?>
 
                         <form action="" method="post">
-                            <div class="mb-3">
-                                <label for="niy" class="form-label fw-medium small">Nomor Induk Yayasan (NIY)</label>
+                            <div class="mb-3 text-start">
+                                <label for="username" class="form-label fw-medium small">Username / NIY</label>
                                 <div class="input-group">
-                                    <span class="input-group-text bg-light text-muted border-end-0" id="basic-addon1"><i class="fa-regular fa-id-badge"></i></span>
-                                    <input type="text" id="niy" name="niy" class="form-control border-start-0 ps-0 bg-light" placeholder="Masukkan NIY Anda" autocomplete="off" required>
+                                    <span class="input-group-text bg-light text-muted border-end-0" id="basic-addon1"><i class="fa-regular fa-user"></i></span>
+                                    <input type="text" id="username" name="username" class="form-control border-start-0 ps-0 bg-light" placeholder="Masukkan username" autocomplete="off" required>
                                 </div>
                             </div>
                             
