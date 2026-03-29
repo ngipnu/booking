@@ -104,8 +104,15 @@ $koneksi->query("CREATE TABLE IF NOT EXISTS aset (
     bisa_dipinjam ENUM('Y', 'N') DEFAULT 'Y',
     status ENUM('tersedia', 'dipinjam', 'rusak', 'pemeliharaan') DEFAULT 'tersedia',
     deskripsi TEXT,
+    penanggung_jawab VARCHAR(100) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )");
+
+// Migrasi Aset: Tambah penanggung_jawab jika belum ada
+$check_a_pj = $koneksi->query("SHOW COLUMNS FROM aset LIKE 'penanggung_jawab'");
+if ($check_a_pj->num_rows == 0) {
+    $koneksi->query("ALTER TABLE aset ADD COLUMN penanggung_jawab VARCHAR(100) NULL AFTER status");
+}
 
 // Migrasi: Tambahkan kolom baru jika tabel sudah ada sebelumnya
 $check_cols = $koneksi->query("SHOW COLUMNS FROM aset LIKE 'id_kategori'");
@@ -130,13 +137,15 @@ if ($check_p_nama->num_rows == 0) {
     $koneksi->query("ALTER TABLE peminjaman ADD COLUMN unit_peminjam VARCHAR(100) AFTER nama_peminjam");
 }
 
-// Cek apakah tabel aset masih kosong, kita isi dummy baru sesuai permintaan user
+/* 
+// Cek apakah tabel aset masih kosong, kita isi dummy baru (Nonaktifkan agar tidak muncul kembali setelah dihapus)
 $cek_aset = $koneksi->query("SELECT * FROM aset");
 if ($cek_aset->num_rows == 0) {
     $koneksi->query("INSERT IGNORE INTO aset (kode_aset, nama_aset, merk, warna, kategori, harga_beli, tgl_beli, toko_pembelian, kota_pembelian, divisi_pembeli, unit_pengguna, lokasi_simpan, kondisi, bisa_dipinjam, status) VALUES 
     ('INV-TV-001', 'Android TV ukuran 50 inci', 'TCL', 'Hitam', 'elektronik', 6000000.00, '2024-03-29', 'Informa', 'Cilegon', 'Divisi LRC', 'SDIT An Nadzir', 'Ruang Kelas 3B', 'baik', 'Y', 'tersedia'),
     ('INV-MOB-01', 'Honda Innova Zenix 2024', 'Toyota', 'Putih', 'kendaraan', 450000000.00, '2024-01-15', 'Auto2000', 'Serang', 'Sarpras Pusat', 'Yayasan An Nadzir', 'Parkir Gedung A', 'baik', 'Y', 'tersedia')");
 }
+*/
 
 // Tabel Peminjaman
 $koneksi->query("CREATE TABLE IF NOT EXISTS peminjaman (

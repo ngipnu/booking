@@ -259,7 +259,7 @@ include '../layouts/sidebar.php';
                 <button class="btn btn-outline-primary rounded-pill px-3 shadow-sm fw-medium d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalImport">
                     <i class="fa-solid fa-file-import"></i> <span class="d-md-inline">Import</span>
                 </button>
-                <button class="btn btn-primary btn-primary-add rounded-pill px-4 shadow-sm fw-bold d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalTambahAset">
+                <button class="btn btn-primary btn-primary-add rounded-pill px-4 shadow-sm fw-bold d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalPilihKategori">
                     <i class="fa-solid fa-plus-circle"></i> <span>Tambah Aset</span>
                 </button>
             </div>
@@ -409,11 +409,51 @@ include '../layouts/sidebar.php';
 
     <!-- Floating Action Button -->
     <div class="fab-container d-md-none">
-        <button class="fab-btn" data-bs-toggle="modal" data-bs-target="#modalTambahAset">
+        <button class="fab-btn" data-bs-toggle="modal" data-bs-target="#modalPilihKategori">
             <i class="fa-solid fa-plus"></i>
         </button>
     </div>
 </main>
+
+<!-- Modal Step 1: Pilih Kategori -->
+<div class="modal fade" id="modalPilihKategori" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content glass-effect border-0">
+            <div class="modal-header border-0 px-4 pt-4 text-center d-block">
+                <h5 class="modal-title font-heading fw-bold fs-4">Pilih Kategori Aset</h5>
+                <p class="text-muted small">Tentukan jenis inventaris yang ingin Anda daftarkan.</p>
+            </div>
+            <div class="modal-body px-4 pb-5">
+                <div class="row g-3">
+                    <?php foreach($kategori_list as $kat): ?>
+                    <div class="col-6 col-md-4">
+                        <div class="category-select-card glass-card p-4 text-center cursor-pointer h-100 d-flex flex-column align-items-center justify-content-center border-2" 
+                             onclick="selectCategoryAndOpenAdd('<?= $kat['id'] ?>', '<?= htmlspecialchars($kat['nama_kategori']) ?>')">
+                            <div class="bg-primary-soft text-primary rounded-circle d-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                <i class="fa-solid fa-<?= $kat['icon'] ? $kat['icon'] : 'box' ?> fs-3"></i>
+                            </div>
+                            <h6 class="fw-bold text-dark mb-0"><?= $kat['nama_kategori'] ?></h6>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.category-select-card {
+    transition: all 0.3s ease;
+    border: 2px solid transparent !important;
+}
+.category-select-card:hover {
+    transform: translateY(-5px);
+    background: white !important;
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+}
+</style>
 
 <!-- Modal Tambah Aset -->
 <div class="modal fade" id="modalTambahAset" tabindex="-1" aria-hidden="true">
@@ -457,11 +497,23 @@ include '../layouts/sidebar.php';
                             <label class="form-label small fw-bold text-muted">Unit Pengguna (Pemegang)</label>
                             <input type="text" class="form-control" name="unit_pengguna" placeholder="e.g. SDIT An Nadzir" list="list-unit">
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4 text-start">
                             <label class="form-label small fw-bold text-muted">Lokasi / Ruangan Simpan</label>
                             <input type="text" class="form-control" name="lokasi_simpan" placeholder="e.g. Ruang Kelas 3B" list="list-lokasi">
                         </div>
+                        <div class="col-md-8 text-start">
+                            <label class="form-label small fw-bold text-muted">Penanggung Jawab / Pengelola</label>
+                            <input type="text" class="form-control" name="penanggung_jawab" placeholder="e.g. Ust. Ahmad / Divisi Sarpras">
+                        </div>
                         
+                        <div class="col-md-4 text-start">
+                            <label class="form-label small fw-bold text-muted">Bisa Dipinjam? (Publik)</label>
+                            <select class="form-select" name="bisa_dipinjam">
+                                <option value="Y">🌐 Bisa Dipinjam</option>
+                                <option value="N">🔒 Internal Saja</option>
+                            </select>
+                        </div>
+
                         <div class="col-12"><hr class="my-1 opacity-5"></div>
                         
                         <div id="finance-section-add" class="row g-3 p-0 m-0">
@@ -505,13 +557,6 @@ include '../layouts/sidebar.php';
                                 <input type="date" class="form-control" name="garansi_sampai" id="add_garansi_sampai">
                             </div>
 
-                            <div class="col-md-4">
-                                <label class="form-label small fw-bold text-muted">Bisa Dipinjam?</label>
-                                <select class="form-select" name="bisa_dipinjam">
-                                    <option value="Y">🌐 Bisa Dipinjam</option>
-                                    <option value="N">🔒 Internal Saja</option>
-                                </select>
-                            </div>
                             <div class="col-md-4">
                                 <label class="form-label small fw-bold text-muted">Sumber Anggaran</label>
                                 <input type="text" class="form-control" name="divisi_pembeli" placeholder="e.g. Divisi LRC">
@@ -664,30 +709,43 @@ function toggleView(view) {
                             <label class="form-label small fw-bold text-muted">Unit Pengguna</label>
                             <input type="text" class="form-control" name="unit_pengguna" value="<?= htmlspecialchars($row['unit_pengguna']) ?>" list="list-unit">
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4 text-start">
                             <label class="form-label small fw-bold text-muted">Lokasi Simpan</label>
                             <input type="text" class="form-control" name="lokasi_simpan" value="<?= htmlspecialchars($row['lokasi_simpan']) ?>" list="list-lokasi">
                         </div>
-                        
-                        <div class="col-md-4">
-                            <label class="form-label small fw-bold text-muted">Kondisi</label>
-                            <select class="form-select" name="kondisi">
-                                <option value="baik" <?= $row['kondisi'] == 'baik' ? 'selected' : '' ?>>✅ Baik</option>
-                                <option value="rusak_ringan" <?= $row['kondisi'] == 'rusak_ringan' ? 'selected' : '' ?>>⚠️ Rusak Ringan</option>
-                                <option value="rusak_berat" <?= $row['kondisi'] == 'rusak_berat' ? 'selected' : '' ?>>❌ Rusak Berat</option>
+                        <div class="col-md-8 text-start">
+                            <label class="form-label small fw-bold text-muted">Penanggung Jawab / Pengelola</label>
+                            <input type="text" class="form-control" name="penanggung_jawab" value="<?= htmlspecialchars($row['penanggung_jawab']) ?>" placeholder="Nama Pengelola">
+                        </div>
+                        <div class="col-md-4 text-start">
+                            <label class="form-label small fw-bold text-muted">Status Pinjam (Publik)</label>
+                            <select class="form-select" name="bisa_dipinjam">
+                                <option value="Y" <?= $row['bisa_dipinjam'] == 'Y' ? 'selected' : '' ?>>🌐 Bisa Dipinjam</option>
+                                <option value="N" <?= $row['bisa_dipinjam'] == 'N' ? 'selected' : '' ?>>🔒 Internal Saja</option>
                             </select>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label small fw-bold text-muted">Harga Beli</label>
-                            <input type="number" class="form-control" name="harga_beli" value="<?= (int)$row['harga_beli'] ?>">
-                        </div>
-                        <div class="col-md-4">
+                        
+                        <div class="row g-3 p-0 m-0 finance-edit-section mt-2">
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold text-muted">Kondisi</label>
+                                <select class="form-select" name="kondisi">
+                                    <option value="baik" <?= $row['kondisi'] == 'baik' ? 'selected' : '' ?>>✅ Baik</option>
+                                    <option value="rusak_ringan" <?= $row['kondisi'] == 'rusak_ringan' ? 'selected' : '' ?>>⚠️ Rusak Ringan</option>
+                                    <option value="rusak_berat" <?= $row['kondisi'] == 'rusak_berat' ? 'selected' : '' ?>>❌ Rusak Berat</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold text-muted">Harga Beli</label>
+                                <input type="number" class="form-control" name="harga_beli" value="<?= (int)$row['harga_beli'] ?>">
+                            </div>
+                            <div class="col-md-4">
                                 <label class="form-label small fw-bold text-muted">Ada Garansi?</label>
                                 <select class="form-select" name="ada_garansi" id="edit_ada_garansi_<?= $row['id'] ?>">
                                     <option value="N" <?= $row['ada_garansi'] == 'N' ? 'selected' : '' ?>>Tidak Ada</option>
                                     <option value="Y" <?= $row['ada_garansi'] == 'Y' ? 'selected' : '' ?>>Ya, Bergaransi</option>
                                 </select>
                             </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer border-0 px-4 pb-4">
@@ -752,8 +810,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const inputMerk = modalBody.querySelector('input[name="merk"]');
             const inputWarna = modalBody.querySelector('input[name="warna"]');
-            
-            const isRoom = selectedText.includes('ruang') || selectedText.includes('bangunan') || selectedText.includes('fasilitas');
+            const financeSection = modalBody.querySelector('#finance-section-add') || modalBody.querySelector('.row.g-3.mt-2'); // Simple check for finance sub-row
+
+            const isRoom = selectedText.includes('ruang') || selectedText.includes('bangunan') || selectedText.includes('fasilitas') || selectedText.includes('umum');
 
             if (inputMerk && inputMerk.parentElement) {
                 inputMerk.parentElement.style.display = isRoom ? 'none' : 'block';
@@ -761,12 +820,42 @@ document.addEventListener('DOMContentLoaded', function() {
             if (inputWarna && inputWarna.parentElement) {
                 inputWarna.parentElement.style.display = isRoom ? 'none' : 'block';
             }
+            
+            // Sembunyikan Bagian Keuangan/Garansi jika Kategori Ruangan/Fasilitas
+            const financeRow = modalBody.querySelector('#finance-section-add') || modalBody.querySelectorAll('.col-md-4')[3]?.parentElement; 
+            // Better to wrap the finance section in edit modal too or find it specifically
+            const editFinanceRow = modalBody.querySelector('.finance-edit-section'); // I should add this class
+            
+            if (financeSection) {
+                financeSection.style.display = isRoom ? 'none' : 'flex';
+            }
+            if (editFinanceRow) {
+                editFinanceRow.style.display = isRoom ? 'none' : 'flex';
+            }
         };
 
         select.addEventListener('change', toggleFields);
         toggleFields();
     });
 });
+
+function selectCategoryAndOpenAdd(id, name) {
+    const modalPilih = bootstrap.Modal.getInstance(document.getElementById('modalPilihKategori'));
+    modalPilih.hide();
+    
+    setTimeout(() => {
+        const selectKat = document.querySelector('#modalTambahAset select[name="id_kategori"]');
+        if (selectKat) {
+            selectKat.value = id;
+            // Trigger change event to update fields
+            const event = new Event('change');
+            selectKat.dispatchEvent(event);
+        }
+        
+        const myModal = new bootstrap.Modal(document.getElementById('modalTambahAset'));
+        myModal.show();
+    }, 400);
+}
 </script>
 
 <?php include '../layouts/footer.php'; ?>

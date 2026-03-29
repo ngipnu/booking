@@ -44,4 +44,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     header("Location: dashboard.php?date=$tgl_pinjam");
     exit;
 }
+
+// Batal Ajuan
+if (isset($_GET['aksi']) && $_GET['aksi'] == 'batal' && isset($_GET['id'])) {
+    $id = (int) $_GET['id'];
+    $user_id = $_SESSION['user_id'];
+    $nama_pemakai = $koneksi->real_escape_string($_SESSION['nama_pemakai']);
+    $unit_pemakai = $koneksi->real_escape_string($_SESSION['unit_pemakai']);
+    
+    // Pastikan milik sendiri (berdasarkan session identitas) dan masih dalam status 'menunggu' atau 'disetujui'
+    $sql = "DELETE FROM peminjaman WHERE id = $id 
+            AND id_user = $user_id 
+            AND nama_peminjam = '$nama_pemakai' 
+            AND unit_peminjam = '$unit_pemakai' 
+            AND status_pinjam IN ('menunggu', 'disetujui')";
+            
+    if ($koneksi->query($sql)) {
+        if ($koneksi->affected_rows > 0) {
+            $_SESSION['pesan_sukses'] = "Ajuan peminjaman berhasil dibatalkan.";
+        } else {
+            $_SESSION['pesan_error'] = "Gagal membatalkan ajuan: Anda tidak memiliki akses untuk menghapus ajuan ini.";
+        }
+    } else {
+        $_SESSION['pesan_error'] = "Terjadi kesalahan sistem.";
+    }
+    
+    header("Location: dashboard.php");
+    exit;
+}
 ?>

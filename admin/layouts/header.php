@@ -49,9 +49,19 @@ $primary_color = isset($matches[0]) ? $matches[0] : '#3b82f6';
             color: var(--primary-color) !important;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
+        /* Sidebar Branding */
+        .offcanvas-sidebar a .text-dark, .offcanvas-sidebar a .fs-6 {
+            color: white !important;
+        }
+        .offcanvas-sidebar a .text-muted {
+            color: rgba(255,255,255,0.7) !important;
+        }
+        .offcanvas-sidebar a.border-bottom {
+            border-color: rgba(255,255,255,0.1) !important;
+        }
 
         /* Tema Topbar */
-        .topbar h5, .topbar .topbar-btn i, .topbar span.text-dark {
+        .topbar h5, .topbar .topbar-btn i, .topbar span.text-dark, .topbar .profile-link span {
             color: var(--topbar-text) !important;
         }
         

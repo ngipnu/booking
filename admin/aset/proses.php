@@ -26,12 +26,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['aksi'])) {
     $garansi_sampai = !empty($_POST['garansi_sampai']) ? $_POST['garansi_sampai'] : NULL;
     $tahun_anggaran = $koneksi->real_escape_string($_POST['tahun_anggaran']);
     $tgl_beli = !empty($_POST['tgl_beli']) ? $koneksi->real_escape_string($_POST['tgl_beli']) : date('Y-m-d');
+    $penanggung_jawab = $koneksi->real_escape_string($_POST['penanggung_jawab']);
 
     if ($_POST['aksi'] == 'tambah') {
         $kode_aset = $koneksi->real_escape_string($_POST['kode_aset']);
         
-        $sql = "INSERT INTO aset (kode_aset, nama_aset, merk, warna, id_kategori, unit_pengguna, lokasi_simpan, divisi_pembeli, tahun_anggaran, toko_pembelian, kota_pembelian, harga_beli, tgl_beli, ada_garansi, garansi_sampai, kondisi, bisa_dipinjam) 
-                VALUES ('$kode_aset', '$nama_aset', '$merk', '$warna', $id_kategori, '$unit_pengguna', '$lokasi_simpan', '$divisi_pembeli', '$tahun_anggaran', '$toko_pembelian', '$kota_pembelian', $harga_beli, '$tgl_beli', '$ada_garansi', ".($garansi_sampai?"'$garansi_sampai'":"NULL").", '$kondisi', '$bisa_dipinjam')";
+        $sql = "INSERT INTO aset (kode_aset, nama_aset, merk, warna, id_kategori, unit_pengguna, lokasi_simpan, divisi_pembeli, tahun_anggaran, toko_pembelian, kota_pembelian, harga_beli, tgl_beli, ada_garansi, garansi_sampai, kondisi, bisa_dipinjam, penanggung_jawab) 
+                VALUES ('$kode_aset', '$nama_aset', '$merk', '$warna', $id_kategori, '$unit_pengguna', '$lokasi_simpan', '$divisi_pembeli', '$tahun_anggaran', '$toko_pembelian', '$kota_pembelian', $harga_beli, '$tgl_beli', '$ada_garansi', ".($garansi_sampai?"'$garansi_sampai'":"NULL").", '$kondisi', '$bisa_dipinjam', '$penanggung_jawab')";
         
         if ($koneksi->query($sql)) {
             $_SESSION['pesan'] = "Aset '$nama_aset' berhasil diregistrasi.";
@@ -57,7 +58,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['aksi'])) {
                 ada_garansi='$ada_garansi',
                 garansi_sampai=".($garansi_sampai?"'$garansi_sampai'":"NULL").",
                 kondisi='$kondisi', 
-                bisa_dipinjam='$bisa_dipinjam' 
+                bisa_dipinjam='$bisa_dipinjam',
+                penanggung_jawab='$penanggung_jawab' 
                 WHERE id=$id";
         
         if ($koneksi->query($sql)) {
@@ -107,8 +109,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['aksi'])) {
 
 if (isset($_GET['aksi']) && $_GET['aksi'] == 'hapus' && isset($_GET['id'])) {
     $id = (int) $_GET['id'];
-    $koneksi->query("DELETE FROM aset WHERE id=$id");
-    $_SESSION['pesan'] = "Data aset telah dihapus.";
+    if ($koneksi->query("DELETE FROM aset WHERE id=$id")) {
+        $_SESSION['pesan'] = "Data aset telah berhasil dihapus.";
+    } else {
+        $_SESSION['pesan_error'] = "Gagal menghapus data: " . $koneksi->error;
+    }
     header("Location: index.php");
     exit;
 }
