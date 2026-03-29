@@ -2,53 +2,149 @@
 // config/database.php
 
 $host = 'localhost';
-$username = 'root'; // Setup bawaan XAMPP Mac
-$password = ''; // Kosong untuk XAMPP default
-$database = 'annadzir_booking'; // Nama database
+$username = 'root'; 
+$password = ''; 
+$database = 'annadzir_booking'; 
 
-// Membuat koneksi
 $koneksi = new mysqli($host, $username, $password);
 
-// Cek koneksi db server
 if ($koneksi->connect_error) {
     die("Koneksi gagal: " . $koneksi->connect_error);
 }
 
-// Cek & Buat Database jika belum ada
+// Cek & Buat Database
 $sql_db = "CREATE DATABASE IF NOT EXISTS $database";
 $koneksi->query($sql_db);
-
-// Pilih Database
 $koneksi->select_db($database);
 
-// Array of table creation queries
-$queries = [
-    "CREATE TABLE IF NOT EXISTS users (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        niy VARCHAR(20) NOT NULL UNIQUE COMMENT 'Nomor Induk Yayasan',
-        nama VARCHAR(100) NOT NULL,
-        password VARCHAR(255) NOT NULL,
-        role ENUM('admin', 'pegawai') DEFAULT 'pegawai',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )",
-    "CREATE TABLE IF NOT EXISTS fasilitas (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        kode_fasilitas VARCHAR(50) NOT NULL UNIQUE,
-        nama_fasilitas VARCHAR(100) NOT NULL,
-        kategori ENUM('kendaraan', 'ruangan', 'elektronik') NOT NULL,
-        deskripsi TEXT,
-        status ENUM('tersedia', 'dipinjam', 'rusak', 'pemeliharaan') DEFAULT 'tersedia',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )"
-];
+// Tabel Users (Pegawai & Admin)
+$koneksi->query("CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    niy VARCHAR(20) NULL UNIQUE,
+    username VARCHAR(50) NULL UNIQUE,
+    nama VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NULL,
+    password VARCHAR(255) NOT NULL,
+    role ENUM('admin', 'user', 'pegawai') DEFAULT 'user',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)");
 
-foreach ($queries as $query) {
-    $koneksi->query($query);
+// Migrasi User: Tambah username & email jika belum ada
+$check_u_username = $koneksi->query("SHOW COLUMNS FROM users LIKE 'username'");
+if ($check_u_username->num_rows == 0) {
+    $koneksi->query("ALTER TABLE users ADD COLUMN username VARCHAR(50) AFTER niy");
+    $koneksi->query("UPDATE users SET username = niy"); // Jadikan niy sebagai username default
+}
+$check_u_email = $koneksi->query("SHOW COLUMNS FROM users LIKE 'email'");
+if ($check_u_email->num_rows == 0) {
+    $koneksi->query("ALTER TABLE users ADD COLUMN email VARCHAR(100) AFTER nama");
+}
+$koneksi->query("ALTER TABLE users MODIFY COLUMN role ENUM('admin', 'user', 'pegawai') DEFAULT 'user'");
+
+// Tabel Profil Lembaga
+$koneksi->query("CREATE TABLE IF NOT EXISTS profil_lembaga (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nama_lembaga VARCHAR(100) DEFAULT 'An Nadzir Islamic School',
+    email_admin VARCHAR(100) DEFAULT 'admin@annadzir.sch.id',
+    alamat TEXT,
+    telepon VARCHAR(20)
+)");
+
+$cek_profil = $koneksi->query("SELECT * FROM profil_lembaga");
+if ($cek_profil->num_rows == 0) {
+    $koneksi->query("INSERT INTO profil_lembaga (nama_lembaga) VALUES ('An Nadzir Islamic School')");
 }
 
-// Check jika admin default belum ada, kita insert otomatis saat aplikasi berjalan.
-// NIY: admin
-// Pass: admin123
+// Tabel Kategori (Dinamis)
+$koneksi->query("CREATE TABLE IF NOT EXISTS kategori (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nama_kategori VARCHAR(100) NOT NULL UNIQUE,
+    icon VARCHAR(50) DEFAULT 'box'
+)");
+
+// Isi kategori awal jika kosong
+$cek_kat = $koneksi->query("SELECT * FROM kategori");
+if ($cek_kat->num_rows == 0) {
+    $koneksi->query("INSERT INTO kategori (nama_kategori, icon) VALUES 
+    ('Elektronik', 'laptop'),
+    ('Kendaraan', 'car'),
+    ('Ruangan', 'building'),
+    ('Mebel', 'chair'),
+    ('Lainnya', 'box')");
+}
+
+// Create Tabel Aset 
+$koneksi->query("CREATE TABLE IF NOT EXISTS aset (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    kode_aset VARCHAR(50) NOT NULL UNIQUE,
+    nama_aset VARCHAR(150) NOT NULL,
+    merk VARCHAR(100),
+    warna VARCHAR(50),
+    id_kategori INT NULL,
+    kategori ENUM('kendaraan', 'ruangan', 'elektronik', 'mebel', 'lainnya') NULL,
+    harga_beli DECIMAL(15,2) DEFAULT 0,
+    tgl_beli DATE,
+    ada_garansi ENUM('Y', 'N') DEFAULT 'N',
+    garansi_sampai DATE NULL,
+    toko_pembelian VARCHAR(150),
+    kota_pembelian VARCHAR(100),
+    divisi_pembeli VARCHAR(100) COMMENT 'Divisi yang melakukan pembelian',
+    unit_pengguna VARCHAR(100) COMMENT 'Unit yang menggunakan',
+    lokasi_simpan VARCHAR(150) COMMENT 'Ruangan/Lokasi fisik',
+    kondisi ENUM('baik', 'rusak_ringan', 'rusak_berat', 'hilang') DEFAULT 'baik',
+    bisa_dipinjam ENUM('Y', 'N') DEFAULT 'Y',
+    status ENUM('tersedia', 'dipinjam', 'rusak', 'pemeliharaan') DEFAULT 'tersedia',
+    deskripsi TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)");
+
+// Migrasi: Tambahkan kolom baru jika tabel sudah ada sebelumnya
+$check_cols = $koneksi->query("SHOW COLUMNS FROM aset LIKE 'id_kategori'");
+if ($check_cols->num_rows == 0) {
+    $koneksi->query("ALTER TABLE aset ADD COLUMN id_kategori INT NULL AFTER warna");
+}
+$check_garansi = $koneksi->query("SHOW COLUMNS FROM aset LIKE 'ada_garansi'");
+if ($check_garansi->num_rows == 0) {
+    $koneksi->query("ALTER TABLE aset ADD COLUMN ada_garansi ENUM('Y', 'N') DEFAULT 'N' AFTER tgl_beli");
+    $koneksi->query("ALTER TABLE aset ADD COLUMN garansi_sampai DATE NULL AFTER ada_garansi");
+}
+$check_anggaran = $koneksi->query("SHOW COLUMNS FROM aset LIKE 'tahun_anggaran'");
+if ($check_anggaran->num_rows == 0) {
+    $koneksi->query("ALTER TABLE aset ADD COLUMN tahun_anggaran VARCHAR(4) NULL AFTER garansi_sampai");
+}
+$koneksi->query("ALTER TABLE aset MODIFY COLUMN kategori ENUM('kendaraan', 'ruangan', 'elektronik', 'mebel', 'lainnya') NULL");
+
+// Migrasi Peminjaman: Tambahkan kolom identitas peminjam real (untuk multi-user account)
+$check_p_nama = $koneksi->query("SHOW COLUMNS FROM peminjaman LIKE 'nama_peminjam'");
+if ($check_p_nama->num_rows == 0) {
+    $koneksi->query("ALTER TABLE peminjaman ADD COLUMN nama_peminjam VARCHAR(100) AFTER id_user");
+    $koneksi->query("ALTER TABLE peminjaman ADD COLUMN unit_peminjam VARCHAR(100) AFTER nama_peminjam");
+}
+
+// Cek apakah tabel aset masih kosong, kita isi dummy baru sesuai permintaan user
+$cek_aset = $koneksi->query("SELECT * FROM aset");
+if ($cek_aset->num_rows == 0) {
+    $koneksi->query("INSERT IGNORE INTO aset (kode_aset, nama_aset, merk, warna, kategori, harga_beli, tgl_beli, toko_pembelian, kota_pembelian, divisi_pembeli, unit_pengguna, lokasi_simpan, kondisi, bisa_dipinjam, status) VALUES 
+    ('INV-TV-001', 'Android TV ukuran 50 inci', 'TCL', 'Hitam', 'elektronik', 6000000.00, '2024-03-29', 'Informa', 'Cilegon', 'Divisi LRC', 'SDIT An Nadzir', 'Ruang Kelas 3B', 'baik', 'Y', 'tersedia'),
+    ('INV-MOB-01', 'Honda Innova Zenix 2024', 'Toyota', 'Putih', 'kendaraan', 450000000.00, '2024-01-15', 'Auto2000', 'Serang', 'Sarpras Pusat', 'Yayasan An Nadzir', 'Parkir Gedung A', 'baik', 'Y', 'tersedia')");
+}
+
+// Tabel Peminjaman
+$koneksi->query("CREATE TABLE IF NOT EXISTS peminjaman (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_user INT NOT NULL,
+    id_aset INT NOT NULL,
+    tgl_pengajuan DATETIME DEFAULT CURRENT_TIMESTAMP,
+    tgl_pinjam DATE NOT NULL,
+    tgl_kembali DATE NOT NULL,
+    keperluan TEXT NOT NULL,
+    status_pinjam ENUM('menunggu', 'disetujui', 'ditolak', 'selesai') DEFAULT 'menunggu',
+    waktu_disetujui DATETIME NULL,
+    FOREIGN KEY (id_user) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (id_aset) REFERENCES aset(id) ON DELETE CASCADE
+)");
+
+// Make sure Admin Exists
 $check_admin = $koneksi->query("SELECT * FROM users WHERE niy = 'admin'");
 if ($check_admin->num_rows == 0) {
     $hashed_password = password_hash('admin123', PASSWORD_BCRYPT);
