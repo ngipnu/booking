@@ -57,6 +57,16 @@ include '../layouts/sidebar.php';
                 <p class="text-muted small mb-0">Laporan fasilitas fisik dan ketersediaan ruangan.</p>
             </div>
             <div class="d-flex gap-2 d-print-none">
+                <?php
+                    $export_params = http_build_query(array_filter([
+                        'gedung' => $filter_gedung,
+                        'status' => $filter_status,
+                    ]));
+                ?>
+                <a href="export_ruangan.php<?= $export_params ? '?' . $export_params : '' ?>" 
+                   class="btn btn-success rounded-pill px-4 shadow-sm fw-bold">
+                    <i class="fa-solid fa-file-excel me-2"></i> Export Excel
+                </a>
                 <button onclick="window.print()" class="btn btn-white rounded-pill px-4 shadow-sm fw-bold">
                     <i class="fa-solid fa-print me-2 text-primary"></i> Cetak Laporan
                 </button>

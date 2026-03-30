@@ -95,6 +95,18 @@ include '../layouts/sidebar.php';
                 <p class="text-muted small mb-0">Laporan aktivitas peminjaman sarana dan prasarana.</p>
             </div>
             <div class="d-flex gap-2 d-print-none">
+                <?php
+                    $export_params = http_build_query(array_filter([
+                        'tgl_mulai'  => $filter_start,
+                        'tgl_selesai'=> $filter_end,
+                        'status'     => $filter_status,
+                        'search'     => $filter_search,
+                    ]));
+                ?>
+                <a href="export_peminjaman.php<?= $export_params ? '?' . $export_params : '' ?>" 
+                   class="btn btn-success rounded-pill px-4 shadow-sm fw-bold">
+                    <i class="fa-solid fa-file-excel me-2"></i> Export Excel
+                </a>
                 <button onclick="window.print()" class="btn btn-white rounded-pill px-4 shadow-sm fw-bold">
                     <i class="fa-solid fa-print me-2 text-primary"></i> Cetak Laporan
                 </button>
