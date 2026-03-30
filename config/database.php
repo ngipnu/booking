@@ -291,10 +291,14 @@ if ($cek_waktu->num_rows == 0) {
     ('Sesi Siang', '13:00:00', '15:00:00', 7)");
 }
 
-// Make sure Admin Exists
+// [DINONAKTIFKAN] Auto-seed admin hanya untuk setup awal.
+// Jika diaktifkan, user admin yg dihapus akan dibuat ulang otomatis setiap halaman dimuat.
+// Untuk membuat ulang akun admin, uncomment block ini sementara, lalu comment kembali.
+/*
 $check_admin = $koneksi->query("SELECT * FROM users WHERE niy = 'admin'");
 if ($check_admin->num_rows == 0) {
     $hashed_password = password_hash('admin123', PASSWORD_BCRYPT);
     $koneksi->query("INSERT INTO users (niy, nama, password, role) VALUES ('admin', 'Administrator System', '$hashed_password', 'admin')");
 }
+*/
 ?>
