@@ -40,6 +40,12 @@ $sql_landing = "
     ORDER BY foto_aset DESC, created_at DESC
     LIMIT 6";
 $aset_landing = $koneksi->query($sql_landing);
+
+// Ambil tema dari profil lembaga agar sinkron
+$profil_tema = $koneksi->query("SELECT sidebar_gradient FROM profil_lembaga LIMIT 1")->fetch_assoc();
+$grad = $profil_tema['sidebar_gradient'] ?? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)';
+preg_match('/(#[a-f0-9]{3,6}|rgba?\([^)]+\))/i', $grad, $matches);
+$primary_color = isset($matches[0]) ? $matches[0] : '#3b82f6';
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -62,6 +68,33 @@ $aset_landing = $koneksi->query($sql_landing);
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="assets/css/style.css">
+    
+    <!-- Dynamic Theme Sync -->
+    <style>
+        :root {
+            --primary-color: <?= $primary_color ?>;
+            --primary-gradient: <?= $grad ?>;
+            /* Adaptive backgrounds to make the design 'senada' (synchronized hue) */
+            --bg-soft: color-mix(in srgb, var(--primary-color) 8%, #ffffff);
+            --bg-main: color-mix(in srgb, var(--primary-color) 3%, #ffffff);
+        }
+        /* Override primary classes to match dashboard theme */
+        .text-primary { color: var(--primary-color) !important; }
+        .bg-primary { background: var(--primary-gradient) !important; border: none; }
+        .border-primary { border-color: var(--primary-color) !important; }
+        
+        .btn-primary { background: var(--primary-gradient) !important; border: none; color: white !important; transition: all 0.3s ease; }
+        .btn-primary:hover { filter: brightness(0.9); transform: translateY(-2px); box-shadow: 0 10px 20px -10px var(--primary-color) !important; }
+        
+        .btn-outline-primary { color: var(--primary-color) !important; border-color: var(--primary-color) !important; background: transparent; transition: all 0.3s ease; }
+        .btn-outline-primary:hover { background: var(--primary-gradient) !important; border-color: transparent !important; color: white !important; transform: translateY(-2px); box-shadow: 0 10px 20px -10px var(--primary-color) !important; }
+        
+        .bg-primary-soft { background-color: <?= $primary_color ?>20 !important; }
+        
+        /* Specific adjustments */
+        .timeline-step .step-number.bg-white { border: 2px solid var(--primary-color) !important; }
+        .timeline-step .step-number.bg-white.text-primary { color: var(--primary-color) !important; }
+    </style>
 </head>
 <body data-bs-spy="scroll" data-bs-target="#navbar" data-bs-offset="100">
 
@@ -110,10 +143,10 @@ $aset_landing = $koneksi->query($sql_landing);
                     <p class="lead text-muted mb-5 px-md-5">Platform cerdas khusus Divisi Sarana dan Prasarana (Sarpras) An Nadzir Islamic School. Digunakan untuk mendata aset lembaga, inventaris tak ternilai, serta mengatur izin peminjaman fasilitas bagi civitas akademika.</p>
                     
                     <div class="d-flex flex-column flex-md-row justify-content-center gap-3">
-                        <a href="login.php" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm">
+                        <a href="login.php" class="btn btn-primary btn-lg rounded-pill px-5 shadow-lg shadow-primary">
                             Login Sekarang<i class="fa-solid fa-arrow-right ms-2"></i>
                         </a>
-                        <a href="#fasilitas" class="btn btn-outline-dark bg-white btn-lg rounded-pill px-4 shadow-sm">
+                        <a href="#fasilitas" class="btn btn-outline-primary bg-white btn-lg rounded-pill px-4 shadow-sm">
                             Eksplor Fasilitas <i class="fa-solid fa-magnifying-glass ms-2"></i>
                         </a>
                     </div>
@@ -201,7 +234,7 @@ $aset_landing = $koneksi->query($sql_landing);
                             </p>
                             <?php if($item['tipe'] === 'ruangan' && !empty($item['kapasitas'])): ?>
                             <p class="mb-2">
-                                <span class="badge rounded-pill px-3 py-2" style="background: rgba(99,102,241,0.1); color: #6366f1; font-size:0.75rem;">
+                                <span class="badge rounded-pill px-3 py-2 bg-primary-soft text-primary" style="font-size:0.75rem;">
                                     <i class="fa-solid fa-users me-1"></i> Kapasitas <?= (int)$item['kapasitas'] ?> orang
                                 </span>
                             </p>
