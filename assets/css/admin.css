@@ -138,15 +138,35 @@ body {
 }
 
 /* Premium Buttons */
-.btn-primary {
+.btn-primary,
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active,
+.btn-primary * {
     background: var(--primary-gradient);
     border: none;
+    color: white !important;
+}
+.btn-primary {
     box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25);
     transition: all 0.2s;
 }
 .btn-primary:hover {
     box-shadow: 0 8px 20px rgba(14, 165, 233, 0.35);
     transform: translateY(-1px);
+    filter: brightness(0.95);
+}
+.btn-outline-primary {
+    color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    background: transparent !important;
+}
+.btn-outline-primary:hover,
+.btn-outline-primary:focus,
+.btn-outline-primary:active {
+    background: var(--primary-gradient) !important;
+    color: white !important;
+    border-color: transparent !important;
 }
 
 /* Valuation Banner */

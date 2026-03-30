@@ -34,6 +34,14 @@ $primary_color = isset($matches[0]) ? $matches[0] : '#3b82f6';
         /* Navbar Branding */
         .text-primary, .navbar-brand.text-success { color: var(--primary-color) !important; }
         .btn-primary, .btn-success, .date-nav, .hero-banner { background: var(--primary-gradient) !important; color: white !important; border: none !important; }
+        .btn-primary:hover, .btn-primary:focus, .btn-primary:active,
+        .btn-primary *  { color: white !important; }
+        .btn-outline-primary { color: var(--primary-color) !important; border-color: var(--primary-color) !important; }
+        .btn-outline-primary:hover, .btn-outline-primary:focus, .btn-outline-primary:active {
+            background: var(--primary-gradient) !important;
+            color: white !important;
+            border-color: transparent !important;
+        }
         
         .stat-card:hover { border-color: var(--primary-color) !important; }
         .category-card:hover { background: #f0fdf4; border-color: var(--primary-color) !important; }

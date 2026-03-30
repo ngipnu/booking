@@ -52,16 +52,40 @@ $primary_color = isset($matches[0]) ? $matches[0] : '#3b82f6';
         }
         
         /* Tema Aksen Global */
-        .btn-primary {
+        .btn-primary,
+        .btn-primary:hover,
+        .btn-primary:focus,
+        .btn-primary:active,
+        .btn-primary *  {
             background: var(--primary-gradient) !important;
             border: none !important;
+            color: white !important;
+        }
+        .btn-outline-primary {
+            color: var(--primary-color) !important;
+            border-color: var(--primary-color) !important;
+        }
+        .btn-outline-primary:hover,
+        .btn-outline-primary:focus,
+        .btn-outline-primary:active {
+            background: var(--primary-gradient) !important;
+            color: white !important;
+            border-color: transparent !important;
         }
         .text-primary {
             color: var(--primary-color) !important;
         }
-        .bg-primary-soft {
-            background-color: <?= $primary_color ?>20 !important; /* Opacity 20% hex hack (simplistic) */
+        /* Prevent text-primary leaking into buttons */
+        .btn.text-primary,
+        .btn .text-primary {
+            color: inherit !important;
         }
+        .bg-primary-soft {
+            background-color: <?= $primary_color ?>20 !important;
+        }
+        /* Semua elemen dengan bg-primary harus teks putih */
+        .bg-primary { background: var(--primary-gradient) !important; }
+        .bg-primary, .bg-primary * { color: white !important; }
         
         /* Hover Table & List */
         .table tbody tr:hover {

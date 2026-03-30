@@ -27,21 +27,30 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 /* Custom Bootstrap Utilities */
 .text-primary { color: var(--primary-color) !important; }
 .bg-primary { background-color: var(--primary-color) !important; }
-.btn-primary { 
-    background-color: var(--primary-color); 
+.btn-primary,
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active,
+.btn-primary * { 
+    background-color: var(--primary-color);
     border-color: var(--primary-color);
+    color: white !important;
 }
 .btn-primary:hover {
     background-color: var(--primary-dark);
     border-color: var(--primary-dark);
+    filter: brightness(0.95);
 }
 .btn-outline-primary {
     color: var(--primary-color);
     border-color: var(--primary-color);
 }
-.btn-outline-primary:hover {
+.btn-outline-primary:hover,
+.btn-outline-primary:focus,
+.btn-outline-primary:active {
     background-color: var(--primary-color);
     border-color: var(--primary-color);
+    color: white !important;
 }
 
 .text-tertiary { color: var(--tertiary-color) !important; }
