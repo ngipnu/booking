@@ -81,6 +81,8 @@ $primary_color = isset($matches[0]) ? $matches[0] : '#3b82f6';
         /* Override primary classes to match dashboard theme */
         .text-primary { color: var(--primary-color) !important; }
         .bg-primary { background: var(--primary-gradient) !important; border: none; }
+        .bg-primary, .bg-primary * { color: white !important; }
+        .bg-primary .btn-light { color: var(--primary-color) !important; }
         .border-primary { border-color: var(--primary-color) !important; }
         
         .btn-primary { background: var(--primary-gradient) !important; border: none; color: white !important; transition: all 0.3s ease; }
@@ -312,7 +314,7 @@ $primary_color = isset($matches[0]) ? $matches[0] : '#3b82f6';
     <!-- CALL TO ACTION -->
     <section class="py-5 bg-primary text-white position-relative overflow-hidden">
         <div class="container py-5 text-center position-relative z-1">
-            <h2 class="display-6 fw-bold font-heading mb-4">Masih bingung cara pinjam fasilitas?</h2>
+            <h2 class="display-6 fw-bold font-heading mb-4 text-white">Masih bingung cara pinjam fasilitas?</h2>
             <p class="lead mb-5 opacity-75" style="max-width: 700px; margin: 0 auto;">Hubungi <a href="https://wa.me/6285161252008" class="text-white">Humas</a> atau <a href="login.php" class="text-white">Masuk Dashboard</a> untuk bantuan lebih lanjut.</p>
             <a href="login.php" class="btn btn-light text-primary btn-lg rounded-pill px-5 fw-bold shadow">
                 Masuk Dashboard Pegawai <i class="fa-solid fa-arrow-right ms-2"></i>
@@ -328,7 +330,7 @@ $primary_color = isset($matches[0]) ? $matches[0] : '#3b82f6';
                     <div class="d-flex align-items-center gap-2 mb-3">
                         <img src="assets/logo/logo_round.png?v=1" alt="Logo" class="bg-white rounded-circle p-1" style="width: 50px; height: 50px; object-fit: contain;">
                         <div class="d-flex flex-column lh-1">
-                            <h5 class="mb-1 font-heading fw-bold">Sarana & Prasarana</h5>
+                            <h5 class="mb-1 font-heading fw-bold text-white">Sarana & Prasarana</h5>
                             <span class="text-white opacity-75" style="font-size: 0.8rem; font-weight: 500;">Manajemen Aset</span>
                         </div>
                     </div>
