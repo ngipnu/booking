@@ -47,24 +47,21 @@ elseif ($aksi == 'edit') {
 }
 
 elseif ($aksi == 'hapus') {
-    $id = intval($_GET['id']);
+    $id = intval($_POST['id'] ?? $_GET['id'] ?? 0);
 
-    // Jangan hapus diri sendiri
-    if ($id == $_SESSION['id_user']) {
+    if ($id <= 0) {
+        $_SESSION['pesan_error'] = "ID tidak valid.";
+    } elseif ($id == intval($_SESSION['id_user'] ?? 0)) {
         $_SESSION['pesan_error'] = "Anda tidak bisa menghapus akun sendiri.";
     } else {
-        // Hapus data terkait terlebih dahulu agar tidak terjadi FK constraint error
-        $koneksi->query("DELETE FROM notifikasi WHERE id_user = $id");
-        $koneksi->query("DELETE FROM peminjaman WHERE id_user = $id");
-
         if ($koneksi->query("DELETE FROM users WHERE id = $id")) {
             if ($koneksi->affected_rows > 0) {
                 $_SESSION['pesan'] = "Akun berhasil dihapus.";
             } else {
-                $_SESSION['pesan_error'] = "Akun tidak ditemukan atau sudah dihapus sebelumnya.";
+                $_SESSION['pesan_error'] = "Akun tidak ditemukan.";
             }
         } else {
-            $_SESSION['pesan_error'] = "Gagal menghapus akun: " . $koneksi->error;
+            $_SESSION['pesan_error'] = "Gagal menghapus: " . $koneksi->error;
         }
     }
 }

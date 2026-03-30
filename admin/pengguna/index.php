@@ -12,6 +12,12 @@ if (!isset($_SESSION['login']) || $_SESSION['role'] !== 'admin') {
 // Ambil data user
 $users = $koneksi->query("SELECT * FROM users ORDER BY role ASC, id DESC");
 
+// Kumpulkan semua user ke array (supaya bisa dirender modal di luar tabel)
+$user_list = [];
+while ($u = $users->fetch_assoc()) {
+    $user_list[] = $u;
+}
+
 include '../layouts/header.php';
 include '../layouts/sidebar.php';
 ?>
@@ -31,24 +37,28 @@ include '../layouts/sidebar.php';
         </div>
 
         <?php if (isset($_SESSION['pesan'])): ?>
-            <div class="alert alert-success border-0 shadow-sm mb-4 rounded-4"><?= $_SESSION['pesan']; unset($_SESSION['pesan']); ?></div>
+            <div class="alert alert-success border-0 shadow-sm mb-4 rounded-4 d-flex align-items-center gap-2">
+                <i class="fa-solid fa-circle-check"></i> <?= $_SESSION['pesan']; unset($_SESSION['pesan']); ?>
+            </div>
         <?php endif; ?>
         <?php if (isset($_SESSION['pesan_error'])): ?>
-            <div class="alert alert-danger border-0 shadow-sm mb-4 rounded-4"><?= $_SESSION['pesan_error']; unset($_SESSION['pesan_error']); ?></div>
+            <div class="alert alert-danger border-0 shadow-sm mb-4 rounded-4 d-flex align-items-center gap-2">
+                <i class="fa-solid fa-circle-exclamation"></i> <?= $_SESSION['pesan_error']; unset($_SESSION['pesan_error']); ?>
+            </div>
         <?php endif; ?>
 
         <div class="table-responsive bg-white rounded-4 shadow-sm border border-white-50">
             <table class="table table-hover align-middle mb-0">
                 <thead>
                     <tr class="bg-light bg-opacity-50 text-muted small text-uppercase" style="letter-spacing: 0.5px;">
-                        <th class="ps-4 py-3">Username & Nama</th>
+                        <th class="ps-4 py-3">Username &amp; Nama</th>
                         <th>Status Role</th>
                         <th>Email Terdaftar</th>
                         <th class="text-end pe-4">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php while($u = $users->fetch_assoc()): ?>
+                    <?php foreach ($user_list as $u): ?>
                     <tr>
                         <td class="ps-4 py-3">
                             <div class="d-flex align-items-center gap-3">
@@ -57,7 +67,7 @@ include '../layouts/sidebar.php';
                                 </div>
                                 <div>
                                     <div class="fw-bold text-dark mb-0"><?= htmlspecialchars($u['nama']) ?></div>
-                                    <div class="text-muted small">@<?= htmlspecialchars($u['username']) ?></div>
+                                    <div class="text-muted small">@<?= htmlspecialchars($u['username'] ?? $u['niy'] ?? '-') ?></div>
                                 </div>
                             </div>
                         </td>
@@ -68,69 +78,52 @@ include '../layouts/sidebar.php';
                                 <span class="badge bg-primary-soft text-primary rounded-pill px-2">User / Peminjam</span>
                             <?php endif; ?>
                         </td>
-                        <td class="text-muted"><?= htmlspecialchars($u['email']) ?></td>
+                        <td class="text-muted"><?= htmlspecialchars($u['email'] ?? '-') ?></td>
                         <td class="text-end pe-4">
                             <div class="d-flex justify-content-end gap-2">
-                                <button class="btn btn-sm btn-white border shadow-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalEdit<?= $u['id'] ?>"><i class="fa-solid fa-user-pen me-1"></i> Edit</button>
-                                <a href="proses.php?aksi=hapus&id=<?= $u['id'] ?>" class="btn btn-sm btn-white border shadow-sm rounded-pill text-danger px-3 shadow-none" onclick="return confirm('Hapus akun ini secara permanen?')"><i class="fa-solid fa-trash-can"></i></a>
+                                <!-- Tombol Edit: buka modal -->
+                                <button class="btn btn-sm btn-white border shadow-sm rounded-pill px-3"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#modalEdit<?= $u['id'] ?>">
+                                    <i class="fa-solid fa-user-pen me-1"></i> Edit
+                                </button>
+                                <!-- Tombol Hapus: form POST -->
+                                <?php if ($u['id'] != ($_SESSION['id_user'] ?? 0)): ?>
+                                <form action="proses.php" method="POST" class="d-inline"
+                                      onsubmit="return confirm('Hapus akun \'<?= addslashes(htmlspecialchars($u['nama'])) ?>\' secara permanen?')">
+                                    <input type="hidden" name="aksi" value="hapus">
+                                    <input type="hidden" name="id" value="<?= $u['id'] ?>">
+                                    <button type="submit" class="btn btn-sm btn-white border shadow-sm rounded-pill text-danger px-3">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </form>
+                                <?php else: ?>
+                                <button class="btn btn-sm btn-white border shadow-sm rounded-pill text-muted px-3" disabled title="Tidak bisa hapus akun sendiri">
+                                    <i class="fa-solid fa-lock"></i>
+                                </button>
+                                <?php endif; ?>
                             </div>
                         </td>
                     </tr>
+                    <?php endforeach; ?>
 
-                    <!-- Modal Edit User -->
-                    <div class="modal fade" id="modalEdit<?= $u['id'] ?>" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered">
-                            <div class="modal-content glass-effect">
-                                <div class="modal-header border-0 pb-0">
-                                    <h5 class="modal-title fw-bold">Modifikasi Akun</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                </div>
-                                <form action="proses.php" method="POST">
-                                    <input type="hidden" name="aksi" value="edit">
-                                    <input type="hidden" name="id" value="<?= $u['id'] ?>">
-                                    <div class="modal-body">
-                                        <div class="mb-3 text-start">
-                                            <label class="form-label small fw-bold text-muted">Nama Lengkap</label>
-                                            <input type="text" class="form-control" name="nama" value="<?= htmlspecialchars($u['nama']) ?>" required>
-                                        </div>
-                                        <div class="row g-3">
-                                            <div class="col-md-6 mb-3 text-start">
-                                                <label class="form-label small fw-bold text-muted">Username</label>
-                                                <input type="text" class="form-control" name="username" value="<?= htmlspecialchars($u['username']) ?>" required>
-                                            </div>
-                                            <div class="col-md-6 mb-3 text-start">
-                                                <label class="form-label small fw-bold text-muted">Role</label>
-                                                <select class="form-select" name="role">
-                                                    <option value="user" <?= $u['role'] == 'user' ? 'selected' : '' ?>>User Peminjam</option>
-                                                    <option value="admin" <?= $u['role'] == 'admin' ? 'selected' : '' ?>>Administrator</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="mb-3 text-start">
-                                            <label class="form-label small fw-bold text-muted">Email</label>
-                                            <input type="email" class="form-control" name="email" value="<?= htmlspecialchars($u['email']) ?>" required>
-                                        </div>
-                                        <div class="mb-0 text-start">
-                                            <label class="form-label small fw-bold text-muted">Password Baru (Kosongkan jika tidak diganti)</label>
-                                            <input type="password" class="form-control" name="password" placeholder="••••••••">
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer border-0">
-                                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
-                                        <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold">Update Simpan</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                    <?php endwhile; ?>
+                    <?php if (empty($user_list)): ?>
+                    <tr>
+                        <td colspan="4" class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-users-slash fs-1 opacity-25 d-block mb-3"></i>
+                            Belum ada pengguna terdaftar.
+                        </td>
+                    </tr>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
     </div>
 </main>
 
-<!-- Modal Placeholder (Frontend only for now) -->
+<!-- ============================================ -->
+<!-- MODAL TAMBAH USER -->
+<!-- ============================================ -->
 <div class="modal fade" id="modalTambahUser" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content glass-effect">
@@ -176,5 +169,56 @@ include '../layouts/sidebar.php';
         </div>
     </div>
 </div>
+
+<!-- ============================================ -->
+<!-- MODAL EDIT USER (Satu per user, di luar tabel) -->
+<!-- ============================================ -->
+<?php foreach ($user_list as $u): ?>
+<div class="modal fade" id="modalEdit<?= $u['id'] ?>" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-effect">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">Modifikasi Akun</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="proses.php" method="POST">
+                <input type="hidden" name="aksi" value="edit">
+                <input type="hidden" name="id" value="<?= $u['id'] ?>">
+                <div class="modal-body">
+                    <div class="mb-3 text-start">
+                        <label class="form-label small fw-bold text-muted">Nama Lengkap</label>
+                        <input type="text" class="form-control" name="nama" value="<?= htmlspecialchars($u['nama']) ?>" required>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6 mb-3 text-start">
+                            <label class="form-label small fw-bold text-muted">Username</label>
+                            <input type="text" class="form-control" name="username" value="<?= htmlspecialchars($u['username'] ?? '') ?>" required>
+                        </div>
+                        <div class="col-md-6 mb-3 text-start">
+                            <label class="form-label small fw-bold text-muted">Role</label>
+                            <select class="form-select" name="role">
+                                <option value="user" <?= $u['role'] == 'user' ? 'selected' : '' ?>>User Peminjam</option>
+                                <option value="admin" <?= $u['role'] == 'admin' ? 'selected' : '' ?>>Administrator</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3 text-start">
+                        <label class="form-label small fw-bold text-muted">Email</label>
+                        <input type="email" class="form-control" name="email" value="<?= htmlspecialchars($u['email'] ?? '') ?>">
+                    </div>
+                    <div class="mb-0 text-start">
+                        <label class="form-label small fw-bold text-muted">Password Baru <span class="fw-normal text-muted">(Kosongkan jika tidak diganti)</span></label>
+                        <input type="password" class="form-control" name="password" placeholder="••••••••">
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold">Update Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<?php endforeach; ?>
 
 <?php include '../layouts/footer.php'; ?>
