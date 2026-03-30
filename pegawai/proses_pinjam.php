@@ -40,11 +40,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exit;
     }
 
-    $sql = "INSERT INTO peminjaman (id_user, id_aset, id_ruangan, tgl_pinjam, tgl_kembali, jam_mulai, jam_selesai, nama_peminjam, unit_peminjam, keperluan, status_pinjam) 
-            VALUES ($id_user, $id_aset, $id_ruangan, '$tgl_pinjam', '$tgl_pinjam', '$jam_mulai', '$jam_selesai', '$nama_peminjam', '$unit_peminjam', '$keperluan', 'menunggu')";
+    $status_awal = ($id_aset !== 'NULL') ? 'disetujui' : 'menunggu';
+
+    $sql = "INSERT INTO peminjaman (id_user, id_aset, id_ruangan, tgl_pinjam, tgl_kembali, jam_mulai, jam_selesai, nama_peminjam, unit_peminjam, keperluan, status_pinjam, waktu_disetujui) 
+            VALUES ($id_user, $id_aset, $id_ruangan, '$tgl_pinjam', '$tgl_pinjam', '$jam_mulai', '$jam_selesai', '$nama_peminjam', '$unit_peminjam', '$keperluan', '$status_awal', " . ($status_awal === 'disetujui' ? 'NOW()' : 'NULL') . ")";
 
     if ($koneksi->query($sql)) {
-        $_SESSION['pesan_sukses'] = "Peminjaman berhasil diajukan! Menunggu persetujuan admin.";
+        // Jika aset: auto-approve → update status aset menjadi 'dipinjam'
+        if ($id_aset !== 'NULL') {
+            $koneksi->query("UPDATE aset SET status = 'dipinjam' WHERE id = $id_aset");
+            $_SESSION['pesan_sukses'] = "✅ Peminjaman inventaris berhasil! Barang langsung dapat diambil.";
+        } else {
+            $_SESSION['pesan_sukses'] = "📋 Pengajuan ruangan berhasil dikirim! Menunggu persetujuan admin.";
+        }
 
         // Notifikasi in-app ke semua admin
         $admins = $koneksi->query("SELECT id FROM users WHERE role = 'admin'");
@@ -54,20 +62,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($id_aset !== 'NULL') {
             $item_info = $koneksi->query("SELECT nama_aset FROM aset WHERE id = $id_aset")->fetch_assoc();
             $item_name = $item_info['nama_aset'];
-            $notif_link = '../../admin/peminjaman/index.php';
+            // Notifikasi informasi saja — tidak perlu aksi dari admin
+            kirimNotifikasi($koneksi, $admin_ids,
+                "📦 Inventaris Dipinjam: $item_name",
+                "{$_SESSION['nama_pemakai']} ({$_SESSION['unit_pemakai']}) meminjam \"$item_name\" pada " .
+                date('d M Y', strtotime($tgl_pinjam)) . " pukul " .
+                substr($jam_mulai,0,5) . "–" . substr($jam_selesai,0,5) . ". (Otomatis disetujui)",
+                'info',
+                '/booking/booking/admin/peminjaman/index.php'
+            );
+            $notif_link = '/booking/booking/admin/peminjaman/index.php';
         } else {
             $item_info = $koneksi->query("SELECT nama_ruangan FROM ruangan WHERE id = $id_ruangan")->fetch_assoc();
             $item_name = $item_info['nama_ruangan'];
-            $notif_link = '../../admin/peminjaman/index.php';
+            // Notifikasi perlu tindakan — ruangan butuh approval
+            kirimNotifikasi($koneksi, $admin_ids,
+                "🏫 Perlu Disetujui: $item_name",
+                "{$_SESSION['nama_pemakai']} ({$_SESSION['unit_pemakai']}) mengajukan booking ruangan \"$item_name\" pada " .
+                date('d M Y', strtotime($tgl_pinjam)) . " pukul " .
+                substr($jam_mulai,0,5) . "–" . substr($jam_selesai,0,5) . ". Mohon segera diproses.",
+                'warning',
+                '/booking/booking/admin/peminjaman/index.php'
+            );
+            $notif_link = '/booking/booking/admin/peminjaman/index.php';
         }
-        kirimNotifikasi($koneksi, $admin_ids,
-            "📋 Pengajuan Baru: $item_name",
-            "{$_SESSION['nama_pemakai']} ({$_SESSION['unit_pemakai']}) mengajukan peminjaman " .
-            "\"$item_name\" pada " . date('d M Y', strtotime($tgl_pinjam)) . " pukul " . 
-            substr($jam_mulai,0,5) . "–" . substr($jam_selesai,0,5) . ".",
-            'warning',
-            $notif_link
-        );
 
         try {
             require_once '../config/mailer.php';
@@ -154,7 +172,6 @@ if (isset($_GET['aksi']) && $_GET['aksi'] == 'batal' && isset($_GET['id'])) {
     $nama_pemakai = $koneksi->real_escape_string($_SESSION['nama_pemakai']);
     $unit_pemakai = $koneksi->real_escape_string($_SESSION['unit_pemakai']);
     
-    // Pastikan milik sendiri (berdasarkan session identitas) dan masih dalam status 'menunggu' atau 'disetujui'
     $sql = "DELETE FROM peminjaman WHERE id = $id 
             AND id_user = $user_id 
             AND nama_peminjam = '$nama_pemakai' 
@@ -171,6 +188,55 @@ if (isset($_GET['aksi']) && $_GET['aksi'] == 'batal' && isset($_GET['id'])) {
         $_SESSION['pesan_error'] = "Terjadi kesalahan sistem.";
     }
     
+    header("Location: dashboard.php");
+    exit;
+}
+
+// ── Kembalikan Barang/Ruangan oleh User ──
+if (isset($_GET['aksi']) && $_GET['aksi'] == 'kembali' && isset($_GET['id'])) {
+    $id      = (int) $_GET['id'];
+    $user_id = $_SESSION['user_id'];
+
+    // Ambil data peminjaman milik user ini, status harus 'disetujui'
+    $data_p = $koneksi->query("
+        SELECT p.*, a.nama_aset, r.nama_ruangan 
+        FROM peminjaman p
+        LEFT JOIN aset a ON p.id_aset = a.id
+        LEFT JOIN ruangan r ON p.id_ruangan = r.id
+        WHERE p.id = $id AND p.id_user = $user_id AND p.status_pinjam = 'disetujui'
+    ")->fetch_assoc();
+
+    if (!$data_p) {
+        $_SESSION['pesan_error'] = "Pengembalian gagal: data tidak ditemukan atau tidak bisa dikembalikan.";
+        header("Location: dashboard.php");
+        exit;
+    }
+
+    // Update status peminjaman → selesai
+    $koneksi->query("UPDATE peminjaman SET status_pinjam = 'selesai' WHERE id = $id");
+
+    // Kembalikan status aset / ruangan → tersedia
+    if ($data_p['id_aset']) {
+        $koneksi->query("UPDATE aset SET status = 'tersedia' WHERE id = {$data_p['id_aset']}");
+    } elseif ($data_p['id_ruangan']) {
+        $koneksi->query("UPDATE ruangan SET status = 'tersedia' WHERE id = {$data_p['id_ruangan']}");
+    }
+
+    $item_name = $data_p['nama_aset'] ?: $data_p['nama_ruangan'];
+    $tgl_fmt   = date('d M Y', strtotime($data_p['tgl_pinjam']));
+
+    // Notifikasi ke semua admin
+    $admins = $koneksi->query("SELECT id FROM users WHERE role = 'admin'");
+    $admin_ids = [];
+    while ($a = $admins->fetch_assoc()) $admin_ids[] = $a['id'];
+    kirimNotifikasi($koneksi, $admin_ids,
+        "📦 Dikembalikan: $item_name",
+        "{$_SESSION['nama_pemakai']} ({$_SESSION['unit_pemakai']}) melaporkan pengembalian \"$item_name\" dari peminjaman $tgl_fmt.",
+        'success',
+        '/booking/booking/admin/peminjaman/index.php'
+    );
+
+    $_SESSION['pesan_sukses'] = "✅ Pengembalian berhasil dicatat. Terima kasih!";
     header("Location: dashboard.php");
     exit;
 }

@@ -14,11 +14,11 @@ $sql_landing = "
            a.merk, a.lokasi_simpan, a.unit_pengguna,
            k.nama_kategori, k.icon as kat_icon, 'aset' as tipe, a.created_at,
            NULL as kapasitas,
-           MIN(CASE WHEN p.status_pinjam = 'disetujui' AND p.tgl_pinjam = CURDATE() THEN p.jam_mulai END) as jam_mulai_aktif,
-           MAX(CASE WHEN p.status_pinjam = 'disetujui' AND p.tgl_pinjam = CURDATE() THEN p.jam_selesai END) as jam_selesai_aktif
+           MIN(CASE WHEN p.status_pinjam IN ('disetujui','menunggu') AND p.tgl_pinjam = CURDATE() THEN p.jam_mulai END) as jam_mulai_aktif,
+           MAX(CASE WHEN p.status_pinjam IN ('disetujui','menunggu') AND p.tgl_pinjam = CURDATE() THEN p.jam_selesai END) as jam_selesai_aktif
     FROM aset a 
     LEFT JOIN kategori k ON a.id_kategori = k.id
-    LEFT JOIN peminjaman p ON p.id_aset = a.id AND p.status_pinjam = 'disetujui' AND p.tgl_pinjam = CURDATE()
+    LEFT JOIN peminjaman p ON p.id_aset = a.id AND p.status_pinjam IN ('disetujui','menunggu') AND p.tgl_pinjam = CURDATE()
     WHERE a.bisa_dipinjam = 'Y' AND a.status != 'rusak'
     GROUP BY a.id, a.kode_aset, a.nama_aset, a.status, a.foto_aset, a.merk, a.lokasi_simpan, a.unit_pengguna, k.nama_kategori, k.icon, a.created_at
 
@@ -29,11 +29,11 @@ $sql_landing = "
            NULL as merk, g.nama_gedung as lokasi_simpan, NULL as unit_pengguna,
            'Ruangan' as nama_kategori, 'building' as kat_icon, 'ruangan' as tipe, r.created_at,
            r.kapasitas,
-           MIN(CASE WHEN p.status_pinjam = 'disetujui' AND p.tgl_pinjam = CURDATE() THEN p.jam_mulai END) as jam_mulai_aktif,
-           MAX(CASE WHEN p.status_pinjam = 'disetujui' AND p.tgl_pinjam = CURDATE() THEN p.jam_selesai END) as jam_selesai_aktif
+           MIN(CASE WHEN p.status_pinjam IN ('disetujui','menunggu') AND p.tgl_pinjam = CURDATE() THEN p.jam_mulai END) as jam_mulai_aktif,
+           MAX(CASE WHEN p.status_pinjam IN ('disetujui','menunggu') AND p.tgl_pinjam = CURDATE() THEN p.jam_selesai END) as jam_selesai_aktif
     FROM ruangan r
     LEFT JOIN gedung g ON r.id_gedung = g.id
-    LEFT JOIN peminjaman p ON p.id_ruangan = r.id AND p.status_pinjam = 'disetujui' AND p.tgl_pinjam = CURDATE()
+    LEFT JOIN peminjaman p ON p.id_ruangan = r.id AND p.status_pinjam IN ('disetujui','menunggu') AND p.tgl_pinjam = CURDATE()
     WHERE r.bisa_dipinjam = 'Y' AND r.status != 'perbaikan'
     GROUP BY r.id, r.kode_ruangan, r.nama_ruangan, r.status, r.foto_ruangan, g.nama_gedung, r.created_at, r.kapasitas
     
@@ -139,15 +139,21 @@ $aset_landing = $koneksi->query($sql_landing);
                     while ($item = $aset_landing->fetch_assoc()):
                         $icon = $icon_map[$item['kat_icon']] ?? 'fa-box';
                         
-                        // Badge status: cek pinjaman aktif hari ini
+                        // Badge status: cek pinjaman hari ini (disetujui/menunggu)
                         if (!empty($item['jam_mulai_aktif']) && !empty($item['jam_selesai_aktif'])) {
-                            $jam_dari = substr($item['jam_mulai_aktif'], 0, 5);
-                            $jam_sd   = substr($item['jam_selesai_aktif'], 0, 5);
-                            $status_badge = '<span class="badge bg-danger position-absolute top-0 end-0 m-3 rounded-pill px-3 py-2 shadow-sm" style="font-size:0.7rem;"><i class="fa-solid fa-clock me-1"></i> Dipakai ' . $jam_dari . '–' . $jam_sd . '</span>';
+                            $jam_dari   = substr($item['jam_mulai_aktif'], 0, 5);
+                            $jam_sd     = substr($item['jam_selesai_aktif'], 0, 5);
+                            $now        = date('H:i');
+                            // Cek apakah sekarang sedang dalam rentang waktu booking
+                            if ($now >= $jam_dari && $now < $jam_sd) {
+                                $status_badge = '<span class="badge bg-danger position-absolute top-0 end-0 m-3 rounded-pill px-3 py-2 shadow-sm" style="font-size:0.7rem;"><i class="fa-solid fa-circle-dot me-1"></i> Sedang Dipakai s/d ' . $jam_sd . '</span>';
+                            } else {
+                                $status_badge = '<span class="badge bg-warning text-dark position-absolute top-0 end-0 m-3 rounded-pill px-3 py-2 shadow-sm" style="font-size:0.7rem;"><i class="fa-solid fa-clock me-1"></i> Akan digunakan pk ' . $jam_dari . '</span>';
+                            }
                         } elseif ($item['status'] === 'tersedia') {
                             $status_badge = '<span class="badge bg-success position-absolute top-0 end-0 m-3 rounded-pill px-3 py-2 shadow-sm"><i class="fa-solid fa-check-circle me-1"></i> Tersedia</span>';
                         } else {
-                            $status_badge = '<span class="badge bg-warning text-dark position-absolute top-0 end-0 m-3 rounded-pill px-3 py-2 shadow-sm"><i class="fa-solid fa-calendar-check me-1"></i> Bisa Dipesan</span>';
+                            $status_badge = '<span class="badge bg-success position-absolute top-0 end-0 m-3 rounded-pill px-3 py-2 shadow-sm"><i class="fa-solid fa-check-circle me-1"></i> Tersedia</span>';
                         }
                         
                         // Tentukan folder foto berdasarkan tipe

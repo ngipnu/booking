@@ -183,22 +183,25 @@ include 'layouts/header.php';
                 <div class="glass-card p-4 shadow-sm animate-fade-up h-100" style="animation-delay: 0.3s;">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h6 class="fw-bold text-dark mb-0">Aktivitas Pinjaman Aktif</h6>
-                        <a href="peminjaman.php" class="text-success small fw-bold text-decoration-none">Lihat Semua</a>
+                        <a href="riwayat.php" class="text-success small fw-bold text-decoration-none">Lihat Semua</a>
                     </div>
                     
                     <?php 
-                    // Pinjaman Saya (Update query untuk Ruangan)
+                    // Hanya tampilkan pinjaman AKTIF (menunggu/disetujui) milik akun ini
                     $my_active = $koneksi->query("SELECT p.*, a.nama_aset, k.nama_kategori, k.icon as kat_icon, r.nama_ruangan 
                                                     FROM peminjaman p 
                                                     LEFT JOIN aset a ON p.id_aset = a.id 
                                                     LEFT JOIN kategori k ON a.id_kategori = k.id
                                                     LEFT JOIN ruangan r ON p.id_ruangan = r.id
                                                     WHERE p.id_user = $user_id 
-                                                    ORDER BY p.tgl_pinjam DESC, p.jam_mulai DESC LIMIT 5");
+                                                    AND p.status_pinjam IN ('menunggu', 'disetujui')
+                                                    ORDER BY p.tgl_pinjam ASC, p.jam_mulai ASC LIMIT 5");
                     
                     if ($my_active->num_rows > 0): ?>
                         <div class="d-flex flex-column gap-3">
-                            <?php while ($ma = $my_active->fetch_assoc()): ?>
+                            <?php while ($ma = $my_active->fetch_assoc()): 
+                                $is_mine = ($ma['nama_peminjam'] == $nama_pemakai && $ma['unit_peminjam'] == $unit_pemakai);
+                            ?>
                                 <div class="p-3 bg-light rounded-4 border border-white position-relative">
                                     <div class="d-flex align-items-center gap-3 mb-2">
                                         <div class="bg-white text-<?= $ma['id_ruangan'] ? 'primary' : 'success' ?> rounded-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 40px; height: 40px;">
@@ -216,26 +219,41 @@ include 'layouts/header.php';
                                     </div>
                                     <div class="d-flex justify-content-between align-items-center mt-2 px-1">
                                         <?php if($ma['status_pinjam'] == 'menunggu'): ?>
-                                            <span class="badge bg-warning-soft text-warning rounded-pill px-2 py-1" style="font-size: 0.6rem;">Menunggu Konfirmasi</span>
-                                        <?php else: ?>
-                                            <span class="badge bg-success-soft text-success rounded-pill px-2 py-1" style="font-size: 0.6rem;">Disetujui</span>
+                                            <span class="badge bg-warning-soft text-warning rounded-pill px-2 py-1" style="font-size: 0.6rem;"><i class="fa-solid fa-hourglass-half me-1"></i>Menunggu</span>
+                                        <?php elseif($ma['status_pinjam'] == 'disetujui'): ?>
+                                            <span class="badge bg-success text-white rounded-pill px-2 py-1" style="font-size: 0.6rem;"><i class="fa-solid fa-check me-1"></i>Disetujui</span>
                                         <?php endif; ?>
-                                        
-                                        <?php if ($ma['nama_peminjam'] == $nama_pemakai && $ma['unit_peminjam'] == $unit_pemakai): ?>
-                                        <a href="proses_pinjam.php?aksi=batal&id=<?= $ma['id'] ?>" class="text-danger small fw-bold text-decoration-none" onclick="return confirm('Batalkan pengajuan ini?')">
-                                            <i class="fa-solid fa-trash-can me-1" style="font-size: 0.6rem;"></i> Batal
-                                        </a>
-                                        <?php else: ?>
-                                        <span class="text-muted small" style="font-size: 0.6rem;"><i class="fa-solid fa-lock me-1"></i> Milik <?= htmlspecialchars($ma['nama_peminjam'] ?: 'Unit Lain') ?></span>
-                                        <?php endif; ?>
+
+                                        <div class="d-flex gap-2">
+                                            <?php if ($is_mine && $ma['status_pinjam'] == 'disetujui'): ?>
+                                            <a href="proses_pinjam.php?aksi=kembali&id=<?= $ma['id'] ?>"
+                                               class="btn btn-sm btn-success rounded-pill px-2 py-1 fw-bold"
+                                               style="font-size:0.6rem;"
+                                               onclick="return confirm('Konfirmasi pengembalian <?= htmlspecialchars(addslashes($ma['id_aset'] ? $ma['nama_aset'] : $ma['nama_ruangan'])) ?>?')">
+                                                <i class="fa-solid fa-rotate-left me-1"></i> Kembalikan
+                                            </a>
+                                            <?php endif; ?>
+
+                                            <?php if ($is_mine && $ma['status_pinjam'] == 'menunggu'): ?>
+                                            <a href="proses_pinjam.php?aksi=batal&id=<?= $ma['id'] ?>"
+                                               class="text-danger small fw-bold text-decoration-none"
+                                               style="font-size:0.6rem;"
+                                               onclick="return confirm('Batalkan pengajuan ini?')">
+                                                <i class="fa-solid fa-trash-can me-1"></i> Batal
+                                            </a>
+                                            <?php elseif(!$is_mine): ?>
+                                            <span class="text-muted small" style="font-size: 0.6rem;"><i class="fa-solid fa-lock me-1"></i> <?= htmlspecialchars($ma['nama_peminjam'] ?: 'Unit Lain') ?></span>
+                                            <?php endif; ?>
+                                        </div>
                                     </div>
                                 </div>
                             <?php endwhile; ?>
                         </div>
                     <?php else: ?>
                         <div class="text-center py-5">
-                            <img src="https://cdni.iconscout.com/illustration/premium/thumb/no-data-found-illustration-download-in-svg-png-gif-formats--missing-not-available-file-search-empty-state-pack-user-interface-illustrations-5218443.png" alt="Empty" class="img-fluid mb-3" style="max-height: 120px; opacity: 0.5;">
-                            <p class="text-muted small">Belum ada riwayat peminjaman.</p>
+                            <i class="fa-solid fa-circle-check text-success fs-1 mb-3 d-block opacity-40"></i>
+                            <p class="text-muted small fw-semibold">Tidak ada pinjaman aktif.</p>
+                            <p class="text-muted" style="font-size:0.72rem;">Semua peminjaman sudah selesai atau belum ada pengajuan baru.</p>
                         </div>
                     <?php endif; ?>
 

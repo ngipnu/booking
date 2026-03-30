@@ -34,7 +34,7 @@ if ($_GET['aksi'] == 'setujui') {
         "✅ Disetujui: $item_name",
         "Pengajuan Anda untuk \"$item_name\" pada $tgl_fmt pukul $jam telah DISETUJUI oleh admin. Silakan ambil barang/ruangan sesuai jadwal.",
         'success',
-        'peminjaman.php'
+        '/booking/booking/pegawai/riwayat.php'
     );
 
     $_SESSION['pesan'] = "Peminjaman berhasil disetujui.";
@@ -58,7 +58,7 @@ elseif ($_GET['aksi'] == 'tolak') {
         "❌ Ditolak: $item_name",
         "Maaf, pengajuan Anda untuk \"$item_name\" pada $tgl_fmt tidak dapat disetujui. Hubungi admin untuk informasi lebih lanjut.",
         'danger',
-        'peminjaman.php'
+        '/booking/booking/pegawai/riwayat.php'
     );
 
     $_SESSION['pesan'] = "Peminjaman ditolak.";
@@ -89,7 +89,7 @@ elseif ($_GET['aksi'] == 'kembali') {
         "🔄 Selesai: $item_name",
         "Peminjaman \"$item_name\" Anda telah dicatat selesai oleh admin. Terima kasih!",
         'info',
-        'peminjaman.php'
+        '/booking/booking/pegawai/riwayat.php'
     );
 
     $_SESSION['pesan'] = "Peminjaman telah selesai dan status diperbarui.";

@@ -50,6 +50,10 @@ $primary_color = isset($matches[0]) ? $matches[0] : '#3b82f6';
         .text-success { color: var(--primary-color) !important; }
         
         .navbar-brand .text-dark { color: var(--topbar-text) !important; }
+
+        /* Pastikan navbar dan dropdown notifikasi selalu di atas konten */
+        .navbar.fixed-top { z-index: 9990 !important; }
+        .navbar .dropdown-menu { z-index: 9999 !important; }
     </style>
 </head>
 <body>
@@ -77,7 +81,7 @@ $primary_color = isset($matches[0]) ? $matches[0] : '#3b82f6';
                         <i class="fa-solid fa-bell fs-6 text-muted"></i>
                         <span id="notif-badge-user" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" style="font-size:0.6rem;">0</span>
                     </button>
-                    <div class="dropdown-menu dropdown-menu-end border-0 shadow-lg rounded-4 mt-2 p-0" style="min-width:340px;max-width:360px;">
+                    <div class="dropdown-menu dropdown-menu-end border-0 shadow-lg rounded-4 mt-2 p-0" style="min-width:340px;max-width:360px;z-index:9999;">
                         <div class="d-flex justify-content-between align-items-center px-3 py-3 border-bottom">
                             <h6 class="mb-0 fw-bold"><i class="fa-solid fa-bell me-2 text-primary"></i> Notifikasi</h6>
                             <button class="btn btn-link btn-sm text-muted p-0 text-decoration-none" onclick="bacaSemua('user')" style="font-size:0.75rem;">Tandai semua dibaca</button>
@@ -86,7 +90,7 @@ $primary_color = isset($matches[0]) ? $matches[0] : '#3b82f6';
                             <div class="text-center text-muted py-4"><i class="fa-solid fa-spinner fa-spin"></i></div>
                         </div>
                         <div class="px-3 py-2 border-top text-center">
-                            <a href="peminjaman.php" class="text-primary small fw-bold text-decoration-none">Lihat semua aktivitas →</a>
+                            <a href="riwayat.php" class="text-primary small fw-bold text-decoration-none">Lihat semua aktivitas →</a>
                         </div>
                     </div>
                 </div>

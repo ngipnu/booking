@@ -12,7 +12,7 @@ $primary_color = isset($matches[0]) ? $matches[0] : '#3b82f6';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Admin | Sarpras An Nadzir</title>
+    <title>Dashboard Admin | Sarana & Prasarana</title>
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="../../assets/logo/logo_round.png?v=2">
     <!-- Bootstrap 5 (Lokal) -->

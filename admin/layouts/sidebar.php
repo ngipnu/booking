@@ -77,8 +77,8 @@ $current_file = basename($_SERVER['PHP_SELF']);
     <a href="../dashboard/index.php" class="d-flex align-items-center gap-3 text-decoration-none mb-4 pb-3 border-bottom px-2" style="border-color: rgba(255,255,255,0.1) !important;">
         <img src="../../assets/logo/logo_round.png?v=2" alt="Logo" class="rounded-circle shadow-sm" style="width: 40px; height: 40px; object-fit: contain; background: white;">
         <div class="d-flex flex-column text-white">
-            <span class="fs-6 fw-bold font-heading lh-1">An Nadzir</span>
-            <span class="opacity-50" style="font-size: 0.7rem; font-weight: 500;">Assets Management</span>
+            <span class="fs-6 fw-bold font-heading lh-1">Sarana & Prasarana</span>
+            <span class="opacity-50" style="font-size: 0.7rem; font-weight: 500;">Sistem Manajemen Aset</span>
         </div>
     </a>
     
