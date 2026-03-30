@@ -161,6 +161,22 @@ body {
     margin-bottom: 2.5rem;
     box-shadow: 0 15px 35px -10px rgba(37, 99, 235, 0.3);
 }
+/* Force all text inside valuation-banner to be white regardless of overrides */
+.valuation-banner,
+.valuation-banner h1,
+.valuation-banner h2,
+.valuation-banner h3,
+.valuation-banner h4,
+.valuation-banner h5,
+.valuation-banner h6,
+.valuation-banner span:not(.btn *),
+.valuation-banner i {
+    color: white !important;
+}
+/* Keep the action button using primary color */
+.valuation-banner .btn {
+    color: var(--primary-color) !important;
+}
 
 /* Badge Styling */
 .badge {
