@@ -1,9 +1,9 @@
 # ==============================
 # KEAMANAN - File Sensitif
 # ==============================
-# File konfigurasi database (JANGAN pernah di-commit)
+# File .env JANGAN pernah di-commit (berisi password & API key)
 .env
-config/database.php
+# config/database.php AMAN untuk di-commit (credentials dibaca dari .env)
 
 # ==============================
 # SISTEM & EDITOR

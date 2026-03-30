@@ -18,12 +18,15 @@ $unit_pemakai = $_SESSION['unit_pemakai'];
 
 // Filter status
 $filter = $_GET['status'] ?? 'semua';
-$where_status = match($filter) {
-    'aktif'   => "AND p.status_pinjam IN ('menunggu','disetujui')",
-    'selesai' => "AND p.status_pinjam = 'selesai'",
-    'ditolak' => "AND p.status_pinjam = 'ditolak'",
-    default   => ""
-};
+if ($filter === 'aktif') {
+    $where_status = "AND p.status_pinjam IN ('menunggu','disetujui')";
+} elseif ($filter === 'selesai') {
+    $where_status = "AND p.status_pinjam = 'selesai'";
+} elseif ($filter === 'ditolak') {
+    $where_status = "AND p.status_pinjam = 'ditolak'";
+} else {
+    $where_status = '';
+}
 
 // Ambil semua riwayat peminjaman user ini
 $riwayat = $koneksi->query("
@@ -100,13 +103,17 @@ include 'layouts/header.php';
             $item_icon   = $is_ruangan ? 'fa-door-open' : ('fa-' . ($row['kat_icon'] ?? 'box'));
             $is_mine     = ($row['nama_peminjam'] == $nama_pemakai && $row['unit_peminjam'] == $unit_pemakai);
             $status      = $row['status_pinjam'];
-            $badge = match($status) {
-                'menunggu'  => ['bg-warning text-dark', 'fa-hourglass-half', 'Menunggu'],
-                'disetujui' => ['bg-success text-white', 'fa-check-circle', 'Disetujui'],
-                'selesai'   => ['bg-primary text-white', 'fa-check-double', 'Selesai'],
-                'ditolak'   => ['bg-danger text-white', 'fa-xmark-circle', 'Ditolak'],
-                default     => ['bg-secondary text-white', 'fa-question', $status],
-            };
+            if ($status === 'menunggu') {
+                $badge = ['bg-warning text-dark', 'fa-hourglass-half', 'Menunggu'];
+            } elseif ($status === 'disetujui') {
+                $badge = ['bg-success text-white', 'fa-check-circle', 'Disetujui'];
+            } elseif ($status === 'selesai') {
+                $badge = ['bg-primary text-white', 'fa-check-double', 'Selesai'];
+            } elseif ($status === 'ditolak') {
+                $badge = ['bg-danger text-white', 'fa-xmark-circle', 'Ditolak'];
+            } else {
+                $badge = ['bg-secondary text-white', 'fa-question', $status];
+            }
         ?>
         <div class="glass-card p-4 rounded-4 shadow-sm">
             <div class="row align-items-center g-3">
