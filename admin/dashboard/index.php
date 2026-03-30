@@ -49,7 +49,7 @@ include '../layouts/sidebar.php';
                 </div>
                 <div>
                     <span class="text-white-50 text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 1px;">Total Valuasi Aset Lembaga</span>
-                    <h3 class="font-heading fw-bold mb-0 lh-1 mt-1">Rp <?= number_format($total_nilai, 0, ',', '.') ?></h3>
+                    <h3 class="font-heading fw-bold mb-0 lh-1 mt-1 text-white">Rp <?= number_format($total_nilai, 0, ',', '.') ?></h3>
                 </div>
             </div>
             <a href="../aset/index.php?showModal=tambah" class="btn btn-white rounded-pill px-4 shadow-sm fw-bold border-0" style="background: white; color: var(--primary-color);">
