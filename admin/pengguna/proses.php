@@ -1,8 +1,6 @@
 <?php
 session_start();
 require_once '../../config/database.php';
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
 
 if (!isset($_SESSION['login']) || $_SESSION['role'] !== 'admin') {
     header("Location: ../../login.php");
@@ -12,27 +10,29 @@ if (!isset($_SESSION['login']) || $_SESSION['role'] !== 'admin') {
 $aksi = $_POST['aksi'] ?? $_GET['aksi'] ?? '';
 
 if ($aksi == 'tambah') {
-    $nama = $koneksi->real_escape_string($_POST['nama']);
+    $nama     = $koneksi->real_escape_string($_POST['nama']);
     $username = $koneksi->real_escape_string($_POST['username']);
-    $email = $koneksi->real_escape_string($_POST['email']);
+    $email    = $koneksi->real_escape_string($_POST['email']);
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
-    $role = $_POST['role'];
+    $role     = $_POST['role'];
 
     $sql = "INSERT INTO users (nama, username, email, password, role) VALUES ('$nama', '$username', '$email', '$password', '$role')";
     if ($koneksi->query($sql)) {
         $_SESSION['pesan'] = "Akun baru berhasil ditambahkan.";
+    } else {
+        $_SESSION['pesan_error'] = "Gagal menambahkan akun: " . $koneksi->error;
     }
 }
 
 elseif ($aksi == 'edit') {
-    $id = $_POST['id'];
-    $nama = $koneksi->real_escape_string($_POST['nama']);
+    $id       = intval($_POST['id']);
+    $nama     = $koneksi->real_escape_string($_POST['nama']);
     $username = $koneksi->real_escape_string($_POST['username']);
-    $email = $koneksi->real_escape_string($_POST['email']);
-    $role = $_POST['role'];
+    $email    = $koneksi->real_escape_string($_POST['email']);
+    $role     = $_POST['role'];
 
     $sql = "UPDATE users SET nama='$nama', username='$username', email='$email', role='$role' WHERE id=$id";
-    
+
     // Update password jika diisi
     if (!empty($_POST['password'])) {
         $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
@@ -41,18 +41,30 @@ elseif ($aksi == 'edit') {
 
     if ($koneksi->query($sql)) {
         $_SESSION['pesan'] = "Data akun berhasil diperbarui.";
+    } else {
+        $_SESSION['pesan_error'] = "Gagal memperbarui akun: " . $koneksi->error;
     }
 }
 
 elseif ($aksi == 'hapus') {
-    $id = $_GET['id'];
-    
+    $id = intval($_GET['id']);
+
     // Jangan hapus diri sendiri
     if ($id == $_SESSION['id_user']) {
         $_SESSION['pesan_error'] = "Anda tidak bisa menghapus akun sendiri.";
     } else {
-        if ($koneksi->query("DELETE FROM users WHERE id=$id")) {
-            $_SESSION['pesan'] = "Akun telah berhasil dihapus.";
+        // Hapus data terkait terlebih dahulu agar tidak terjadi FK constraint error
+        $koneksi->query("DELETE FROM notifikasi WHERE id_user = $id");
+        $koneksi->query("DELETE FROM peminjaman WHERE id_user = $id");
+
+        if ($koneksi->query("DELETE FROM users WHERE id = $id")) {
+            if ($koneksi->affected_rows > 0) {
+                $_SESSION['pesan'] = "Akun berhasil dihapus.";
+            } else {
+                $_SESSION['pesan_error'] = "Akun tidak ditemukan atau sudah dihapus sebelumnya.";
+            }
+        } else {
+            $_SESSION['pesan_error'] = "Gagal menghapus akun: " . $koneksi->error;
         }
     }
 }
