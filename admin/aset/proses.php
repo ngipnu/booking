@@ -24,8 +24,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['aksi'])) {
     $bisa_dipinjam = isset($_POST['bisa_dipinjam']) ? $koneksi->real_escape_string($_POST['bisa_dipinjam']) : 'Y';
     $ada_garansi = isset($_POST['ada_garansi']) ? $koneksi->real_escape_string($_POST['ada_garansi']) : 'N';
     $garansi_sampai = !empty($_POST['garansi_sampai']) ? $_POST['garansi_sampai'] : NULL;
-    $tahun_anggaran = $koneksi->real_escape_string($_POST['tahun_anggaran']);
     $tgl_beli = !empty($_POST['tgl_beli']) ? $koneksi->real_escape_string($_POST['tgl_beli']) : date('Y-m-d');
+    $tahun_anggaran = date('Y', strtotime($tgl_beli));
     $penanggung_jawab = $koneksi->real_escape_string($_POST['penanggung_jawab']);
     $id_ruangan = !empty($_POST['id_ruangan']) ? (int)$_POST['id_ruangan'] : "NULL";
 

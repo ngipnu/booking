@@ -576,13 +576,9 @@ include '../layouts/sidebar.php';
                                 <input type="date" id="add_garansi_sampai" class="form-control" name="garansi_sampai">
                             </div>
 
-                            <div class="col-md-4">
+                            <div class="col-md-8">
                                 <label for="add-divisi" class="form-label small fw-bold text-muted">Sumber Anggaran</label>
                                 <input type="text" id="add-divisi" class="form-control" name="divisi_pembeli" placeholder="e.g. Divisi LRC">
-                            </div>
-                            <div class="col-md-4">
-                                <label for="add-tahun" class="form-label small fw-bold text-muted">Tahun Anggaran</label>
-                                <input type="text" id="add-tahun" class="form-control" name="tahun_anggaran" placeholder="YYYY" value="<?= date('Y') ?>">
                             </div>
                             <div class="col-md-6">
                                 <label for="add-toko" class="form-label small fw-bold text-muted">Toko Pembelian</label>
