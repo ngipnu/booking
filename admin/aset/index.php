@@ -261,6 +261,9 @@ include '../layouts/sidebar.php';
                 <button class="btn btn-outline-primary rounded-pill px-3 shadow-sm fw-medium d-flex align-items-center gap-2" data-bs-toggle="collapse" data-bs-target="#collapseFilter">
                     <i class="fa-solid fa-filter"></i> <span>Filter</span>
                 </button>
+                <a href="cetak_qr.php" target="_blank" class="btn btn-outline-dark rounded-pill px-3 shadow-sm fw-medium d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-print"></i> <span class="d-md-inline">Cetak QR</span>
+                </a>
                 <button class="btn btn-outline-primary rounded-pill px-3 shadow-sm fw-medium d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalImport">
                     <i class="fa-solid fa-file-import"></i> <span class="d-md-inline">Import</span>
                 </button>
@@ -474,7 +477,7 @@ include '../layouts/sidebar.php';
                     <div class="row g-3">
                         <div class="col-md-3">
                             <label for="add-kode" class="form-label small fw-bold text-muted">Kode Inventaris</label>
-                            <input type="text" id="add-kode" class="form-control" name="kode_aset" placeholder="INV-..." required>
+                            <input type="text" id="add-kode" class="form-control" name="kode_aset" placeholder="Otomatis (kosongkan) / Manual">
                         </div>
                         <div class="col-md-9">
                             <label for="add-nama" class="form-label small fw-bold text-muted">Nama Barang / Ruangan</label>

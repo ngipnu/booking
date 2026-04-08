@@ -78,12 +78,11 @@ include '../layouts/sidebar.php';
                                 <?php elseif($row['status_pinjam'] == 'disetujui'): ?>
                                     <?php
                                         $today = date('Y-m-d');
+                                        $nama_p = htmlspecialchars($row['nama_peminjam'] ? $row['nama_peminjam'] : $row['nama']);
                                         if ($row['tgl_pinjam'] > $today) {
-                                            $nama_p = htmlspecialchars($row['nama_peminjam'] ? $row['nama_peminjam'] : $row['nama']);
-                                            $waktu = substr($row['jam_mulai'], 0, 5) . ' - ' . substr($row['jam_selesai'], 0, 5);
-                                            echo '<span class="badge bg-info-soft text-info rounded-pill py-1 px-2 mx-auto" style="font-size: 0.7rem; line-height: 1.2; text-wrap: wrap; max-width: 150px; display: block;">Akan dipinjam oleh (' . $nama_p . ' pukul ' . $waktu . ')</span>';
+                                            echo '<span class="badge bg-info-soft text-info rounded-pill py-1 px-2 mx-auto" style="font-size: 0.7rem; line-height: 1.2; text-wrap: wrap; max-width: 150px; display: block;">Akan digunakan oleh (' . $nama_p . ')</span>';
                                         } else {
-                                            echo '<span class="badge bg-success-soft text-success rounded-pill">Sedang dipinjam</span>';
+                                            echo '<span class="badge bg-success-soft text-success rounded-pill py-1 px-2 mx-auto" style="font-size: 0.7rem; line-height: 1.2; text-wrap: wrap; max-width: 150px; display: block;">Sedang digunakan oleh (' . $nama_p . ')</span>';
                                         }
                                     ?>
                                 <?php elseif($row['status_pinjam'] == 'ditolak'): ?>

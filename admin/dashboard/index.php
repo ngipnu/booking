@@ -153,18 +153,49 @@ include '../layouts/sidebar.php';
                                                 <?php else: ?>
                                                     <?php
                                                         $today = date('Y-m-d');
+                                                        $nama_p = htmlspecialchars($row['nama_peminjam'] ? $row['nama_peminjam'] : $row['nama']);
                                                         if ($row['tgl_pinjam'] > $today) {
-                                                            $nama_p = htmlspecialchars($row['nama_peminjam'] ? $row['nama_peminjam'] : $row['nama']);
-                                                            $waktu = substr($row['jam_mulai'], 0, 5) . ' - ' . substr($row['jam_selesai'], 0, 5);
-                                                            echo '<span class="badge bg-info px-2 py-1 rounded-pill fw-medium" style="font-size: 0.7rem; line-height: 1.2; text-wrap: wrap; max-width: 150px; display: inline-block;">Akan dipinjam (' . $nama_p . ' ' . $waktu . ')</span>';
+                                                            echo '<span class="badge bg-info px-2 py-1 rounded-pill fw-medium" style="font-size: 0.7rem; line-height: 1.2; text-wrap: wrap; max-width: 150px; display: inline-block;">Akan digunakan oleh (' . $nama_p . ')</span>';
                                                         } else {
-                                                            echo '<span class="badge bg-success px-2 py-1 rounded-pill fw-medium"><i class="fa-solid fa-check me-1"></i> Aktif</span>';
+                                                            echo '<span class="badge bg-success px-2 py-1 rounded-pill fw-medium" style="font-size: 0.7rem; line-height: 1.2; text-wrap: wrap; max-width: 150px; display: inline-block;">Sedang digunakan oleh (' . $nama_p . ')</span>';
                                                         }
                                                     ?>
                                                 <?php endif; ?>
                                             </td>
                                             <td class="px-3 text-end">
-                                                <button class="btn btn-sm btn-light border shadow-sm rounded-pill"><i class="fa-solid fa-eye text-muted"></i></button>
+                                                <button class="btn btn-sm btn-light border shadow-sm rounded-pill" data-bs-toggle="modal" data-bs-target="#modalLihat<?= $row['id'] ?>"><i class="fa-solid fa-eye text-muted"></i></button>
+
+                                                <!-- Modal Lihat -->
+                                                <div class="modal fade text-start" id="modalLihat<?= $row['id'] ?>" tabindex="-1">
+                                                    <div class="modal-dialog modal-dialog-centered">
+                                                        <div class="modal-content border-0 shadow">
+                                                            <div class="modal-header border-0 pb-0">
+                                                                <h5 class="modal-title fw-bold">Detail Sarana</h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <ul class="list-group list-group-flush">
+                                                                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                                                        <span class="text-muted">Peminjam</span>
+                                                                        <span class="fw-bold"><?= $nama_p ?></span>
+                                                                    </li>
+                                                                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                                                        <span class="text-muted">Aset / Fasilitas</span>
+                                                                        <span class="fw-bold text-end"><?= htmlspecialchars($row['nama_aset']) ?></span>
+                                                                    </li>
+                                                                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                                                        <span class="text-muted">Tanggal</span>
+                                                                        <span class="fw-bold text-end"><?= date('d M Y', strtotime($row['tgl_pinjam'])) ?> s/d <?= date('d M Y', strtotime($row['tgl_kembali'])) ?></span>
+                                                                    </li>
+                                                                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                                                        <span class="text-muted">Jam</span>
+                                                                        <span class="fw-bold text-end"><?= substr($row['jam_mulai'], 0, 5) ?> - <?= substr($row['jam_selesai'], 0, 5) ?></span>
+                                                                    </li>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </td>
                                         </tr>
                                         <?php endwhile; ?>

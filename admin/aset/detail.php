@@ -55,6 +55,25 @@ include '../layouts/sidebar.php';
                     <h4 class="fw-bold text-dark mb-1"><?= htmlspecialchars($aset['nama_aset']) ?></h4>
                     <span class="badge bg-light text-muted border mb-3"><?= htmlspecialchars($aset['kode_aset']) ?></span>
                     
+                    <?php
+                        // Construct public scan URL dynamically
+                        $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
+                        $base_domain = $_SERVER['HTTP_HOST'];
+                        $path_parts = explode('/', trim($_SERVER['REQUEST_URI'], '/'));
+                        $base_path = "/" . $path_parts[0] . "/" . $path_parts[1] . "/scan.php"; // Generates /booking/booking/scan.php
+                        $public_qr_url = $protocol . "://" . $base_domain . $base_path . "?kode=" . urlencode($aset['kode_aset']);
+                        $qr_api_url = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" . urlencode($public_qr_url);
+                    ?>
+                    <div class="mt-2 mb-4">
+                        <p class="small text-muted mb-2">QR Code Identitas Sarana</p>
+                        <div class="bg-white border rounded-3 d-inline-block p-2 shadow-sm">
+                            <img src="<?= $qr_api_url ?>" alt="QR Code" width="130" height="130">
+                        </div>
+                        <div class="mt-2">
+                            <a href="<?= $qr_api_url ?>&margin=10" download="QR_<?= htmlspecialchars($aset['kode_aset']) ?>.png" class="btn btn-sm btn-outline-secondary rounded-pill" target="_blank"><i class="fa-solid fa-download me-1"></i> Unduh / Cetak</a>
+                        </div>
+                    </div>
+                    
                     <div class="d-grid gap-2 mt-4">
                         <a href="index.php" class="btn btn-primary rounded-pill fw-bold">
                             <i class="fa-solid fa-arrow-left me-2"></i> Kembali ke Daftar

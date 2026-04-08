@@ -30,7 +30,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['aksi'])) {
     $id_ruangan = !empty($_POST['id_ruangan']) ? (int)$_POST['id_ruangan'] : "NULL";
 
     if ($_POST['aksi'] == 'tambah') {
-        $kode_aset = $koneksi->real_escape_string($_POST['kode_aset']);
+        $kode_aset = trim($koneksi->real_escape_string($_POST['kode_aset']));
+        if (empty($kode_aset)) {
+            $tahun = date('Y');
+            $bulan = date('m');
+            $kat_name = 'UMM';
+            $kat_query = $koneksi->query("SELECT nama_kategori FROM kategori WHERE id = $id_kategori");
+            if ($kat_query->num_rows > 0) {
+                $kat_name = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $kat_query->fetch_assoc()['nama_kategori']), 0, 3));
+                if(empty($kat_name)) $kat_name = 'UMM';
+            }
+            $prefix = "INV/$tahun/$bulan/$kat_name/";
+            
+            $seq_query = $koneksi->query("SELECT kode_aset FROM aset WHERE kode_aset LIKE '$prefix%' ORDER BY id DESC LIMIT 1");
+            if ($seq_query->num_rows > 0) {
+                $last_code = $seq_query->fetch_assoc()['kode_aset'];
+                $last_seq = (int) substr($last_code, -4);
+                $new_seq = str_pad($last_seq + 1, 4, '0', STR_PAD_LEFT);
+            } else {
+                $new_seq = '0001';
+            }
+            $kode_aset = $prefix . $new_seq;
+        }
         
         // Handle foto upload
         $foto_aset = '';
