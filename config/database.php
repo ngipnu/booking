@@ -233,6 +233,13 @@ $koneksi->query("CREATE TABLE IF NOT EXISTS ruangan (
     FOREIGN KEY (id_gedung) REFERENCES gedung(id) ON DELETE CASCADE
 )");
 
+// Migrasi Ruangan: Tambah penanggung_jawab & kontak_pj jika belum ada
+$check_r_pj = $koneksi->query("SHOW COLUMNS FROM ruangan LIKE 'penanggung_jawab'");
+if ($check_r_pj && $check_r_pj->num_rows == 0) {
+    $koneksi->query("ALTER TABLE ruangan ADD COLUMN penanggung_jawab VARCHAR(100) NULL AFTER status");
+    $koneksi->query("ALTER TABLE ruangan ADD COLUMN kontak_pj VARCHAR(50) NULL AFTER penanggung_jawab");
+}
+
 // Tabel Peminjaman (Update untuk mendukung Ruangan)
 $koneksi->query("CREATE TABLE IF NOT EXISTS peminjaman (
     id INT AUTO_INCREMENT PRIMARY KEY,

@@ -10,12 +10,13 @@ if (!isset($_SESSION['login']) || $_SESSION['role'] !== 'admin') {
 $aksi = $_POST['aksi'] ?? $_GET['aksi'] ?? '';
 
 if ($aksi == 'tambah') {
-    $nama_ruangan = $koneksi->real_escape_string($_POST['nama_ruangan']);
-    $kode_ruangan = $koneksi->real_escape_string($_POST['kode_ruangan']);
-    $id_gedung = $koneksi->real_escape_string($_POST['id_gedung']);
-    $kapasitas = $koneksi->real_escape_string($_POST['kapasitas']);
-    $bisa_dipinjam = $koneksi->real_escape_string($_POST['bisa_dipinjam']);
-    $fasilitas = $koneksi->real_escape_string($_POST['fasilitas']);
+    $nama_ruangan = $koneksi->real_escape_string($_POST['nama_ruangan'] ?? '');
+    $kode_ruangan = $koneksi->real_escape_string($_POST['kode_ruangan'] ?? '');
+    $id_gedung = $koneksi->real_escape_string($_POST['id_gedung'] ?? '');
+    $kapasitas_raw = $_POST['kapasitas'] ?? '';
+    $kapasitas = $kapasitas_raw === '' ? 0 : intval($kapasitas_raw);
+    $bisa_dipinjam = $koneksi->real_escape_string($_POST['bisa_dipinjam'] ?? 'Y');
+    $fasilitas = $koneksi->real_escape_string($_POST['fasilitas'] ?? '');
     $penanggung_jawab = $koneksi->real_escape_string($_POST['penanggung_jawab'] ?? '');
     $kontak_pj = $koneksi->real_escape_string($_POST['kontak_pj'] ?? '');
 
@@ -32,12 +33,13 @@ if ($aksi == 'tambah') {
 
 elseif ($aksi == 'edit') {
     $id = $_POST['id'];
-    $nama_ruangan = $koneksi->real_escape_string($_POST['nama_ruangan']);
-    $kode_ruangan = $koneksi->real_escape_string($_POST['kode_ruangan']);
-    $id_gedung = $koneksi->real_escape_string($_POST['id_gedung']);
-    $kapasitas = $koneksi->real_escape_string($_POST['kapasitas']);
-    $bisa_dipinjam = $koneksi->real_escape_string($_POST['bisa_dipinjam']);
-    $fasilitas = $koneksi->real_escape_string($_POST['fasilitas']);
+    $nama_ruangan = $koneksi->real_escape_string($_POST['nama_ruangan'] ?? '');
+    $kode_ruangan = $koneksi->real_escape_string($_POST['kode_ruangan'] ?? '');
+    $id_gedung = $koneksi->real_escape_string($_POST['id_gedung'] ?? '');
+    $kapasitas_raw = $_POST['kapasitas'] ?? '';
+    $kapasitas = $kapasitas_raw === '' ? 0 : intval($kapasitas_raw);
+    $bisa_dipinjam = $koneksi->real_escape_string($_POST['bisa_dipinjam'] ?? 'Y');
+    $fasilitas = $koneksi->real_escape_string($_POST['fasilitas'] ?? '');
     $penanggung_jawab = $koneksi->real_escape_string($_POST['penanggung_jawab'] ?? '');
     $kontak_pj = $koneksi->real_escape_string($_POST['kontak_pj'] ?? '');
 
