@@ -21,7 +21,7 @@ $aset_bisa_dipinjam = $koneksi->query("SELECT id FROM aset WHERE bisa_dipinjam =
 $aset_inventaris_saja = $koneksi->query("SELECT id FROM aset WHERE bisa_dipinjam = 'N'")->num_rows;
 
 // Mengambil Data Peminjaman Aktif (Limit 5 untuk Dashboard)
-$q_peminjam_aktif = "SELECT p.id, u.nama, a.nama_aset, p.tgl_pinjam, p.tgl_kembali, p.status_pinjam 
+$q_peminjam_aktif = "SELECT p.id, u.nama, a.nama_aset, p.tgl_pinjam, p.tgl_kembali, p.status_pinjam, p.jam_mulai, p.jam_selesai, p.nama_peminjam 
                      FROM peminjaman p 
                      JOIN users u ON p.id_user = u.id 
                      JOIN aset a ON p.id_aset = a.id 
@@ -151,7 +151,16 @@ include '../layouts/sidebar.php';
                                                 <?php if ($row['status_pinjam'] == 'menunggu'): ?>
                                                     <span class="badge bg-warning text-dark px-2 py-1 rounded-pill fw-medium"><i class="fa-solid fa-clock me-1"></i> Menunggu</span>
                                                 <?php else: ?>
-                                                    <span class="badge bg-success px-2 py-1 rounded-pill fw-medium"><i class="fa-solid fa-check me-1"></i> Aktif</span>
+                                                    <?php
+                                                        $today = date('Y-m-d');
+                                                        if ($row['tgl_pinjam'] > $today) {
+                                                            $nama_p = htmlspecialchars($row['nama_peminjam'] ? $row['nama_peminjam'] : $row['nama']);
+                                                            $waktu = substr($row['jam_mulai'], 0, 5) . ' - ' . substr($row['jam_selesai'], 0, 5);
+                                                            echo '<span class="badge bg-info px-2 py-1 rounded-pill fw-medium" style="font-size: 0.7rem; line-height: 1.2; text-wrap: wrap; max-width: 150px; display: inline-block;">Akan dipinjam (' . $nama_p . ' ' . $waktu . ')</span>';
+                                                        } else {
+                                                            echo '<span class="badge bg-success px-2 py-1 rounded-pill fw-medium"><i class="fa-solid fa-check me-1"></i> Aktif</span>';
+                                                        }
+                                                    ?>
                                                 <?php endif; ?>
                                             </td>
                                             <td class="px-3 text-end">

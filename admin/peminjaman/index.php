@@ -76,7 +76,16 @@ include '../layouts/sidebar.php';
                                 <?php if($row['status_pinjam'] == 'menunggu'): ?>
                                     <span class="badge bg-warning-soft text-warning rounded-pill">Menunggu</span>
                                 <?php elseif($row['status_pinjam'] == 'disetujui'): ?>
-                                    <span class="badge bg-success-soft text-success rounded-pill">Sedang Pinjam</span>
+                                    <?php
+                                        $today = date('Y-m-d');
+                                        if ($row['tgl_pinjam'] > $today) {
+                                            $nama_p = htmlspecialchars($row['nama_peminjam'] ? $row['nama_peminjam'] : $row['nama']);
+                                            $waktu = substr($row['jam_mulai'], 0, 5) . ' - ' . substr($row['jam_selesai'], 0, 5);
+                                            echo '<span class="badge bg-info-soft text-info rounded-pill py-1 px-2 mx-auto" style="font-size: 0.7rem; line-height: 1.2; text-wrap: wrap; max-width: 150px; display: block;">Akan dipinjam oleh (' . $nama_p . ' pukul ' . $waktu . ')</span>';
+                                        } else {
+                                            echo '<span class="badge bg-success-soft text-success rounded-pill">Sedang dipinjam</span>';
+                                        }
+                                    ?>
                                 <?php elseif($row['status_pinjam'] == 'ditolak'): ?>
                                     <span class="badge bg-danger-soft text-danger rounded-pill">Ditolak</span>
                                 <?php else: ?>
