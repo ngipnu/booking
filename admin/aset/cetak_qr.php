@@ -11,11 +11,6 @@ if (!isset($_SESSION['login']) || $_SESSION['role'] !== 'admin') {
 $query = "SELECT a.*, k.nama_kategori 
           FROM aset a 
           LEFT JOIN kategori k ON a.id_kategori = k.id 
-          ORDER BY a.kategori, a.id DESC";
-// Wait, a.kategori doesn't exist, it should be a.id_kategori
-$query = "SELECT a.*, k.nama_kategori 
-          FROM aset a 
-          LEFT JOIN kategori k ON a.id_kategori = k.id 
           ORDER BY a.id_kategori ASC, a.id DESC";
 $result = $koneksi->query($query);
 ?>
@@ -186,8 +181,7 @@ $result = $koneksi->query($query);
         <?php 
         $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
         $base_domain = $_SERVER['HTTP_HOST'];
-        $path_parts = explode('/', trim($_SERVER['REQUEST_URI'], '/'));
-        $base_path = "/" . $path_parts[0] . "/" . $path_parts[1] . "/scan.php"; 
+        $base_path = rtrim(dirname(dirname(dirname($_SERVER['PHP_SELF']))), '/\\') . "/scan.php"; 
 
         if ($result && $result->num_rows > 0): 
             while ($row = $result->fetch_assoc()): 

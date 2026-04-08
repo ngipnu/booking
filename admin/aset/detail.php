@@ -59,8 +59,7 @@ include '../layouts/sidebar.php';
                         // Construct public scan URL dynamically
                         $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
                         $base_domain = $_SERVER['HTTP_HOST'];
-                        $path_parts = explode('/', trim($_SERVER['REQUEST_URI'], '/'));
-                        $base_path = "/" . $path_parts[0] . "/" . $path_parts[1] . "/scan.php"; // Generates /booking/booking/scan.php
+                        $base_path = rtrim(dirname(dirname(dirname($_SERVER['PHP_SELF']))), '/\\') . "/scan.php"; 
                         $public_qr_url = $protocol . "://" . $base_domain . $base_path . "?kode=" . urlencode($aset['kode_aset']);
                         $qr_api_url = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" . urlencode($public_qr_url);
                     ?>

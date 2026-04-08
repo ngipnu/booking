@@ -32,8 +32,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['aksi'])) {
     if ($_POST['aksi'] == 'tambah') {
         $kode_aset = trim($koneksi->real_escape_string($_POST['kode_aset']));
         if (empty($kode_aset)) {
-            $tahun = date('Y');
-            $bulan = date('m');
+            $waktu_beli = strtotime($tgl_beli);
+            $tahun = date('Y', $waktu_beli);
+            $bulan = date('m', $waktu_beli);
             $kat_name = 'UMM';
             $kat_query = $koneksi->query("SELECT nama_kategori FROM kategori WHERE id = $id_kategori");
             if ($kat_query->num_rows > 0) {
