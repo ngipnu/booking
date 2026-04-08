@@ -118,6 +118,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $item_html  = htmlspecialchars($item_name);
                 $need_html  = nl2br(htmlspecialchars($keperluan));
 
+                $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
+                $admin_url = $protocol . "://" . $_SERVER['HTTP_HOST'] . rtrim(dirname(dirname($_SERVER['PHP_SELF'])), '/\\') . "/admin/";
+
                 $body = "
                 <div style='font-family:Arial,sans-serif;max-width:600px;margin:auto;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;'>
                     <div style='background:linear-gradient(135deg,#1e3a8a,#3b82f6);padding:30px 24px;text-align:center;'>
@@ -142,11 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                 <td style='padding:10px 0;'>$need_html</td></tr>
                         </table>
                         <div style='margin-top:28px;text-align:center;'>
-                            <?php
-                            $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
-                            $admin_url = $protocol . "://" . $_SERVER['HTTP_HOST'] . rtrim(dirname(dirname($_SERVER['PHP_SELF'])), '/\\') . "/admin/";
-                            ?>
-                            <a href='<?= $admin_url ?>' style='background:#1e3a8a;color:#fff;padding:12px 30px;border-radius:50px;text-decoration:none;font-weight:700;font-size:0.95rem;'>
+                            <a href='$admin_url' style='background:#1e3a8a;color:#fff;padding:12px 30px;border-radius:50px;text-decoration:none;font-weight:700;font-size:0.95rem;'>
                                 Proses di Panel Admin →
                             </a>
                         </div>
