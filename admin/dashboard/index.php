@@ -132,7 +132,9 @@ include '../layouts/sidebar.php';
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php if ($peminjam_aktif && $peminjam_aktif->num_rows > 0): ?>
+                                    <?php 
+                                    $modals_html = '';
+                                    if ($peminjam_aktif && $peminjam_aktif->num_rows > 0): ?>
                                         <?php while ($row = $peminjam_aktif->fetch_assoc()): ?>
                                         <tr>
                                             <td class="px-3 fw-medium text-dark">
@@ -164,9 +166,10 @@ include '../layouts/sidebar.php';
                                             </td>
                                             <td class="px-3 text-end">
                                                 <button class="btn btn-sm btn-light border shadow-sm rounded-pill" data-bs-toggle="modal" data-bs-target="#modalLihat<?= $row['id'] ?>"><i class="fa-solid fa-eye text-muted"></i></button>
-
-                                                <!-- Modal Lihat -->
-                                                <div class="modal fade text-start" id="modalLihat<?= $row['id'] ?>" tabindex="-1">
+                                                <!-- Modal will be generated below -->
+                                                <?php
+                                                $modals_html .= '
+                                                <div class="modal fade text-start" id="modalLihat'.$row['id'].'" tabindex="-1">
                                                     <div class="modal-dialog modal-dialog-centered">
                                                         <div class="modal-content border-0 shadow">
                                                             <div class="modal-header border-0 pb-0">
@@ -177,25 +180,26 @@ include '../layouts/sidebar.php';
                                                                 <ul class="list-group list-group-flush">
                                                                     <li class="list-group-item d-flex justify-content-between align-items-center px-0">
                                                                         <span class="text-muted">Peminjam</span>
-                                                                        <span class="fw-bold"><?= $nama_p ?></span>
+                                                                        <span class="fw-bold">'.$nama_p.'</span>
                                                                     </li>
                                                                     <li class="list-group-item d-flex justify-content-between align-items-center px-0">
                                                                         <span class="text-muted">Aset / Fasilitas</span>
-                                                                        <span class="fw-bold text-end"><?= htmlspecialchars($row['nama_aset']) ?></span>
+                                                                        <span class="fw-bold text-end">'.htmlspecialchars($row['nama_aset']).'</span>
                                                                     </li>
                                                                     <li class="list-group-item d-flex justify-content-between align-items-center px-0">
                                                                         <span class="text-muted">Tanggal</span>
-                                                                        <span class="fw-bold text-end"><?= date('d M Y', strtotime($row['tgl_pinjam'])) ?> s/d <?= date('d M Y', strtotime($row['tgl_kembali'])) ?></span>
+                                                                        <span class="fw-bold text-end">'.date('d M Y', strtotime($row['tgl_pinjam'])).' s/d '.date('d M Y', strtotime($row['tgl_kembali'])).'</span>
                                                                     </li>
                                                                     <li class="list-group-item d-flex justify-content-between align-items-center px-0">
                                                                         <span class="text-muted">Jam</span>
-                                                                        <span class="fw-bold text-end"><?= substr($row['jam_mulai'], 0, 5) ?> - <?= substr($row['jam_selesai'], 0, 5) ?></span>
+                                                                        <span class="fw-bold text-end">'.substr($row['jam_mulai'], 0, 5).' - '.substr($row['jam_selesai'], 0, 5).'</span>
                                                                     </li>
                                                                 </ul>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
+                                                </div>';
+                                                ?>
                                             </td>
                                         </tr>
                                         <?php endwhile; ?>
@@ -217,5 +221,8 @@ include '../layouts/sidebar.php';
         </div>
 
     </div>
+</main>
+
+<?= $modals_html ?? '' ?>
 
 <?php include '../layouts/footer.php'; ?>
