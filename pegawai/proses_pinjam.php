@@ -69,9 +69,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 date('d M Y', strtotime($tgl_pinjam)) . " pukul " .
                 substr($jam_mulai,0,5) . "–" . substr($jam_selesai,0,5) . ". (Otomatis disetujui)",
                 'info',
-                '/booking/booking/admin/peminjaman/index.php'
+                '../peminjaman/index.php'
             );
-            $notif_link = '/booking/booking/admin/peminjaman/index.php';
+            $notif_link = '../peminjaman/index.php';
         } else {
             $item_info = $koneksi->query("SELECT nama_ruangan FROM ruangan WHERE id = $id_ruangan")->fetch_assoc();
             $item_name = $item_info['nama_ruangan'];
@@ -82,9 +82,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 date('d M Y', strtotime($tgl_pinjam)) . " pukul " .
                 substr($jam_mulai,0,5) . "–" . substr($jam_selesai,0,5) . ". Mohon segera diproses.",
                 'warning',
-                '/booking/booking/admin/peminjaman/index.php'
+                '../peminjaman/index.php'
             );
-            $notif_link = '/booking/booking/admin/peminjaman/index.php';
+            $notif_link = '../peminjaman/index.php';
         }
 
         try {
@@ -142,7 +142,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                 <td style='padding:10px 0;'>$need_html</td></tr>
                         </table>
                         <div style='margin-top:28px;text-align:center;'>
-                            <a href='http://localhost/booking/booking/admin/' style='background:#1e3a8a;color:#fff;padding:12px 30px;border-radius:50px;text-decoration:none;font-weight:700;font-size:0.95rem;'>
+                            <?php
+                            $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
+                            $admin_url = $protocol . "://" . $_SERVER['HTTP_HOST'] . rtrim(dirname(dirname($_SERVER['PHP_SELF'])), '/\\') . "/admin/";
+                            ?>
+                            <a href='<?= $admin_url ?>' style='background:#1e3a8a;color:#fff;padding:12px 30px;border-radius:50px;text-decoration:none;font-weight:700;font-size:0.95rem;'>
                                 Proses di Panel Admin →
                             </a>
                         </div>
@@ -233,7 +237,7 @@ if (isset($_GET['aksi']) && $_GET['aksi'] == 'kembali' && isset($_GET['id'])) {
         "📦 Dikembalikan: $item_name",
         "{$_SESSION['nama_pemakai']} ({$_SESSION['unit_pemakai']}) melaporkan pengembalian \"$item_name\" dari peminjaman $tgl_fmt.",
         'success',
-        '/booking/booking/admin/peminjaman/index.php'
+        '../peminjaman/index.php'
     );
 
     $_SESSION['pesan_sukses'] = "✅ Pengembalian berhasil dicatat. Terima kasih!";
