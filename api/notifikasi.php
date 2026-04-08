@@ -22,6 +22,13 @@ if ($aksi === 'get') {
                                LIMIT 8");
     $data   = [];
     while ($n = $notifs->fetch_assoc()) {
+        if ($n['link']) {
+            if (strpos($n['link'], '/booking/booking/admin/peminjaman/index.php') !== false) {
+                $n['link'] = '../peminjaman/index.php';
+            } elseif (strpos($n['link'], '/booking/booking/pegawai/riwayat.php') !== false) {
+                $n['link'] = 'riwayat.php';
+            }
+        }
         $data[] = $n;
     }
     $unread = (int) $koneksi->query("SELECT COUNT(*) FROM notifikasi WHERE id_user = $user_id AND is_read = 0")->fetch_row()[0];
