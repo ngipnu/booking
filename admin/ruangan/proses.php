@@ -16,10 +16,11 @@ if ($aksi == 'tambah') {
     // Auto-generate kode ruangan jika kosong
     $input_kode = trim($_POST['kode_ruangan'] ?? '');
     if ($input_kode === '') {
-        $q_count = $koneksi->query("SELECT COUNT(*) AS total FROM ruangan WHERE id_gedung = '$id_gedung'");
+        $id_g_int = intval($id_gedung);
+        $q_count = $koneksi->query("SELECT MAX(CAST(SUBSTRING_INDEX(kode_ruangan, '-', -1) AS UNSIGNED)) AS max_urut FROM ruangan WHERE id_gedung = $id_g_int");
         $row_count = $q_count ? $q_count->fetch_assoc() : null;
-        $urutan = ($row_count ? $row_count['total'] : 0) + 1;
-        $kode_ruangan = "R-" . $id_gedung . "-" . str_pad($urutan, 3, "0", STR_PAD_LEFT);
+        $urutan = ($row_count ? intval($row_count['max_urut']) : 0) + 1;
+        $kode_ruangan = "R-" . $id_g_int . "-" . str_pad($urutan, 3, "0", STR_PAD_LEFT);
     } else {
         $kode_ruangan = $koneksi->real_escape_string($input_kode);
     }
@@ -50,10 +51,11 @@ elseif ($aksi == 'edit') {
     // Auto-generate kode ruangan jika kosong saat edit 
     $input_kode = trim($_POST['kode_ruangan'] ?? '');
     if ($input_kode === '') {
-        $q_count = $koneksi->query("SELECT COUNT(*) AS total FROM ruangan WHERE id_gedung = '$id_gedung'");
+        $id_g_int = intval($id_gedung);
+        $q_count = $koneksi->query("SELECT MAX(CAST(SUBSTRING_INDEX(kode_ruangan, '-', -1) AS UNSIGNED)) AS max_urut FROM ruangan WHERE id_gedung = $id_g_int");
         $row_count = $q_count ? $q_count->fetch_assoc() : null;
-        $urutan = ($row_count ? $row_count['total'] : 0) + 1;
-        $kode_ruangan = "R-" . $id_gedung . "-" . str_pad($urutan, 3, "0", STR_PAD_LEFT);
+        $urutan = ($row_count ? intval($row_count['max_urut']) : 0) + 1;
+        $kode_ruangan = "R-" . $id_g_int . "-" . str_pad($urutan, 3, "0", STR_PAD_LEFT);
     } else {
         $kode_ruangan = $koneksi->real_escape_string($input_kode);
     }
