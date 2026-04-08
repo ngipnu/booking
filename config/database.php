@@ -110,7 +110,7 @@ function kirimNotifikasi($db, $id_user, string $judul, string $pesan, string $ti
     $targets = is_array($id_user) ? $id_user : [$id_user];
     $judul   = $db->real_escape_string($judul);
     $pesan   = $db->real_escape_string($pesan);
-    $tipe    = in_array($tipe, ['info','success','warning','danger']) ? $tipe : 'info';
+    $tipe    = in_array($tipe, ['info', 'success', 'warning', 'danger']) ? $tipe : 'info';
     $link_sql = $link ? "'" . $db->real_escape_string($link) . "'" : "NULL";
 
     foreach ($targets as $uid) {
@@ -308,4 +308,3 @@ if ($check_admin->num_rows == 0) {
     $koneksi->query("INSERT INTO users (niy, nama, password, role) VALUES ('admin', 'Administrator System', '$hashed_password', 'admin')");
 }
 */
-?>
