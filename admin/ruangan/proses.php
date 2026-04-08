@@ -17,7 +17,8 @@ if ($aksi == 'tambah') {
     $input_kode = trim($_POST['kode_ruangan'] ?? '');
     if ($input_kode === '') {
         $q_count = $koneksi->query("SELECT COUNT(*) AS total FROM ruangan WHERE id_gedung = '$id_gedung'");
-        $urutan = ($q_count->fetch_assoc()['total'] ?? 0) + 1;
+        $row_count = $q_count ? $q_count->fetch_assoc() : null;
+        $urutan = ($row_count ? $row_count['total'] : 0) + 1;
         $kode_ruangan = "R-" . $id_gedung . "-" . str_pad($urutan, 3, "0", STR_PAD_LEFT);
     } else {
         $kode_ruangan = $koneksi->real_escape_string($input_kode);
@@ -50,7 +51,8 @@ elseif ($aksi == 'edit') {
     $input_kode = trim($_POST['kode_ruangan'] ?? '');
     if ($input_kode === '') {
         $q_count = $koneksi->query("SELECT COUNT(*) AS total FROM ruangan WHERE id_gedung = '$id_gedung'");
-        $urutan = ($q_count->fetch_assoc()['total'] ?? 0) + 1;
+        $row_count = $q_count ? $q_count->fetch_assoc() : null;
+        $urutan = ($row_count ? $row_count['total'] : 0) + 1;
         $kode_ruangan = "R-" . $id_gedung . "-" . str_pad($urutan, 3, "0", STR_PAD_LEFT);
     } else {
         $kode_ruangan = $koneksi->real_escape_string($input_kode);
