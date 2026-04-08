@@ -23,6 +23,7 @@ if (!$aset) {
 ?>
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -33,6 +34,7 @@ if (!$aset) {
         body {
             background-color: #f8f9fa;
         }
+
         .header-bg {
             background: linear-gradient(135deg, #0d6efd, #0dcaf0);
             color: white;
@@ -41,15 +43,17 @@ if (!$aset) {
             border-bottom-left-radius: 20px;
             border-bottom-right-radius: 20px;
         }
+
         .glass-card {
             background: white;
             border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
             margin-top: -40px;
             padding: 2rem;
         }
     </style>
 </head>
+
 <body>
 
     <div class="header-bg shadow-sm">
@@ -65,7 +69,6 @@ if (!$aset) {
                         <i class="fa-solid fa-qrcode me-2 text-muted"></i><?= htmlspecialchars($aset['kode_aset']) ?>
                     </span>
                     <h5 class="fw-bold text-dark mb-1">Status: <?= $aset['kondisi'] == 'baik' ? '<span class="text-success"><i class="fa-solid fa-circle-check"></i> Baik & Tersedia</span>' : '<span class="text-danger"><i class="fa-solid fa-circle-exclamation"></i> ' . strtoupper(str_replace('_', ' ', $aset['kondisi'])) . '</span>' ?></h5>
-                    <p class="text-muted small">Informasi Transparan & Terbuka</p>
                 </div>
 
                 <div class="card border-0 shadow-sm rounded-4">
@@ -91,7 +94,7 @@ if (!$aset) {
                             <li class="list-group-item px-0">
                                 <span class="text-muted d-block mb-1">Lokasi Penyimpanan</span>
                                 <span class="fw-bold d-block">
-                                    <?php if($aset['id_ruangan']): ?>
+                                    <?php if ($aset['id_ruangan']): ?>
                                         <div class="text-primary"><i class="fa-solid fa-location-dot me-1"></i><?= htmlspecialchars($aset['nama_ruangan']) ?> (<?= htmlspecialchars($aset['nama_gedung']) ?>)</div>
                                     <?php endif; ?>
                                     <?= htmlspecialchars($aset['lokasi_simpan']) ?>
@@ -99,7 +102,7 @@ if (!$aset) {
                             </li>
                         </ul>
 
-                        <?php if($aset['bisa_dipinjam'] == 'Y'): ?>
+                        <?php if ($aset['bisa_dipinjam'] == 'Y'): ?>
                             <div class="alert alert-info border-0 rounded-3 text-center mb-0">
                                 <i class="fa-solid fa-comment-dots fs-3 text-info mb-2"></i>
                                 <h6 class="fw-bold text-dark">Dapat Dipinjam</h6>
@@ -122,4 +125,5 @@ if (!$aset) {
         </div>
     </div>
 </body>
+
 </html>
