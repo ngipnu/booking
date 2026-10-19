@@ -1,8 +1,6 @@
 <?php
 // config/mailer.php
-// Konfigurasi SMTP untuk pengiriman email
-// Gunakan akun Gmail dengan App Password (bukan password utama)
-// Panduan: https://myaccount.google.com/apppasswords
+// Konfigurasi SMTP untuk pengiriman email (Brevo Relay)
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;
@@ -10,30 +8,50 @@ use PHPMailer\PHPMailer\Exception;
 
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 
-// ============================================================
-//  ISI SESUAI AKUN BREVO (https://app.brevo.com)
-//  SMTP Key ada di: Settings > SMTP & API > SMTP
-// ============================================================
-define('MAIL_HOST',     'smtp-relay.brevo.com');
-define('MAIL_PORT',     587);
-define('MAIL_USERNAME', $_ENV['MAIL_USERNAME'] ?? '');  // Email login Brevo Anda
-define('MAIL_PASSWORD', $_ENV['MAIL_PASSWORD'] ?? '');  // SMTP Key dari Brevo
-define('MAIL_FROM',     $_ENV['MAIL_FROM']     ?? '');
-define('MAIL_FROM_NAME','Sarpras An Nadzir');
-// ============================================================
+// Pastikan file .env terbaca jika belum ada di $_ENV
+if (empty($_ENV['MAIL_USERNAME'])) {
+    $_env_file = dirname(__DIR__) . '/.env';
+    if (file_exists($_env_file)) {
+        foreach (file($_env_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $_line) {
+            $_line = trim($_line);
+            if (empty($_line) || strpos($_line, '#') === 0) continue;
+            if (strpos($_line, '=') !== false) {
+                [$_k, $_v] = explode('=', $_line, 2);
+                $_k = trim($_k);
+                $_v = trim($_v);
+                $_ENV[$_k] = $_v;
+                putenv("$_k=$_v");
+            }
+        }
+    }
+}
+
+if (!defined('MAIL_HOST'))      define('MAIL_HOST',      $_ENV['MAIL_HOST'] ?? 'smtp-relay.brevo.com');
+if (!defined('MAIL_PORT'))      define('MAIL_PORT',      (int)($_ENV['MAIL_PORT'] ?? 587));
+if (!defined('MAIL_USERNAME'))  define('MAIL_USERNAME',  $_ENV['MAIL_USERNAME'] ?? '');
+if (!defined('MAIL_PASSWORD'))  define('MAIL_PASSWORD',  $_ENV['MAIL_PASSWORD'] ?? '');
+if (!defined('MAIL_FROM'))      define('MAIL_FROM',      $_ENV['MAIL_FROM'] ?? '');
+if (!defined('MAIL_FROM_NAME')) define('MAIL_FROM_NAME', $_ENV['MAIL_FROM_NAME'] ?? 'Sarpras An Nadzir');
 
 /**
- * Kirim email menggunakan PHPMailer + Gmail SMTP
+ * Kirim email menggunakan PHPMailer + Brevo SMTP
  * 
- * @param string|array $to       Email tujuan (string atau array ['email@x.com','Nama'])
+ * @param string|array $to       Email tujuan (string atau array string email)
  * @param string       $subject  Judul email
  * @param string       $body     Body HTML email
+ * @param string|null  &$errorMsg Output detail error jika pengiriman gagal
  * @return bool
  */
-function kirimEmail($to, string $subject, string $body): bool
+function kirimEmail($to, string $subject, string $body, ?string &$errorMsg = null): bool
 {
     $mail = new PHPMailer(true);
     try {
+        if (empty(MAIL_USERNAME) || empty(MAIL_PASSWORD) || empty(MAIL_FROM)) {
+            $errorMsg = "Kredensial email di .env belum lengkap (MAIL_USERNAME / MAIL_PASSWORD / MAIL_FROM kosong).";
+            error_log("PHPMailer Error: " . $errorMsg);
+            return false;
+        }
+
         // Server settings
         $mail->isSMTP();
         $mail->Host       = MAIL_HOST;
@@ -50,12 +68,27 @@ function kirimEmail($to, string $subject, string $body): bool
         $mail->setFrom(MAIL_FROM, MAIL_FROM_NAME);
 
         // Penerima
+        $has_recipient = false;
         if (is_array($to)) {
             foreach ($to as $email) {
-                if (!empty($email)) $mail->addAddress(trim($email));
+                $email = trim((string)$email);
+                if (!empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $mail->addAddress($email);
+                    $has_recipient = true;
+                }
             }
         } else {
-            if (!empty($to)) $mail->addAddress(trim($to));
+            $to = trim((string)$to);
+            if (!empty($to) && filter_var($to, FILTER_VALIDATE_EMAIL)) {
+                $mail->addAddress($to);
+                $has_recipient = true;
+            }
+        }
+
+        if (!$has_recipient) {
+            $errorMsg = "Tidak ada alamat email penerima yang valid.";
+            error_log("PHPMailer Error: " . $errorMsg);
+            return false;
         }
 
         // Konten
@@ -67,7 +100,8 @@ function kirimEmail($to, string $subject, string $body): bool
         $mail->send();
         return true;
     } catch (Exception $e) {
-        error_log("PHPMailer Error: " . $mail->ErrorInfo);
+        $errorMsg = $mail->ErrorInfo ?: $e->getMessage();
+        error_log("PHPMailer Error: " . $errorMsg);
         return false;
     }
 }

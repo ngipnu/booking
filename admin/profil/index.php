@@ -33,6 +33,9 @@ include '../layouts/sidebar.php';
         <?php if (isset($_SESSION['pesan'])): ?>
             <div class="alert alert-success border-0 shadow-sm mb-4"><?= $_SESSION['pesan']; unset($_SESSION['pesan']); ?></div>
         <?php endif; ?>
+        <?php if (isset($_SESSION['pesan_error'])): ?>
+            <div class="alert alert-danger border-0 shadow-sm mb-4"><?= $_SESSION['pesan_error']; unset($_SESSION['pesan_error']); ?></div>
+        <?php endif; ?>
 
         <div class="row g-4">
             <div class="col-lg-4">
@@ -132,12 +135,12 @@ include '../layouts/sidebar.php';
                         <div class="row g-3">
                             <div class="col-md-6 text-start">
                                 <label class="form-label small fw-bold text-muted">Email Pengelola Inventaris</label>
-                                <input type="email" name="email_pengelola_inventaris" class="form-control" value="<?= $profil['email_pengelola_inventaris'] ?>" placeholder="admin-inventaris@annadzir.sch.id">
+                                <input type="email" name="email_pengelola_inventaris" class="form-control" value="<?= $profil['email_pengelola_inventaris'] ?>" placeholder="contoh: inventaris@annadzir.or.id">
                                 <div class="form-text small opacity-75">Menerima email jika ada pengajuan pinjam barang.</div>
                             </div>
                             <div class="col-md-6 text-start">
                                 <label class="form-label small fw-bold text-muted">Email Pengelola Ruangan</label>
-                                <input type="email" name="email_pengelola_ruangan" class="form-control" value="<?= $profil['email_pengelola_ruangan'] ?>" placeholder="admin-ruangan@annadzir.sch.id">
+                                <input type="email" name="email_pengelola_ruangan" class="form-control" value="<?= $profil['email_pengelola_ruangan'] ?>" placeholder="contoh: sarpras@annadzir.or.id">
                                 <div class="form-text small opacity-75">Menerima email jika ada booking ruangan.</div>
                             </div>
                         </div>
@@ -148,9 +151,49 @@ include '../layouts/sidebar.php';
                         </div>
                     </div>
                 </div>
+
+                <!-- Card Tes & Diagnostik Email -->
+                <div class="glass-card mt-4">
+                    <div class="card-body p-4 text-start">
+                        <div class="d-flex align-items-center justify-content-between border-bottom pb-2 mb-3">
+                            <h6 class="font-heading fw-bold text-dark mb-0">
+                                <i class="fa-solid fa-envelope-circle-check text-primary me-2"></i>Uji Coba Pengiriman Notifikasi Email
+                            </h6>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 rounded-pill small">
+                                Brevo SMTP Aktif
+                            </span>
+                        </div>
+                        <p class="text-muted small mb-3">
+                            Gunakan fitur ini untuk memastikan server email dapat mengirim pesan dan inbox Anda dapat menerimanya dengan lancar.
+                        </p>
+                        
+                        <div class="p-3 bg-light rounded-3 mb-3 border small">
+                            <div class="row g-2">
+                                <div class="col-sm-6">
+                                    <span class="text-muted">Relay Host:</span> <code>smtp-relay.brevo.com:587</code>
+                                </div>
+                                <div class="col-sm-6">
+                                    <span class="text-muted">Sender (MAIL_FROM):</span> <code><?= htmlspecialchars($_ENV['MAIL_FROM'] ?? 'infobooking@annadzir.or.id') ?></code>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <input type="email" name="test_email_target" form="form_test_email" class="form-control" placeholder="Masukkan alamat email Anda untuk menerima tes..." value="<?= htmlspecialchars(!empty($profil['email_pengelola_ruangan']) ? $profil['email_pengelola_ruangan'] : (!empty($profil['email_admin']) && $profil['email_admin'] !== 'admin@annadzir.sch.id' ? $profil['email_admin'] : ($_ENV['MAIL_FROM'] ?? ''))) ?>" required>
+                            <button type="submit" form="form_test_email" class="btn btn-outline-primary fw-bold px-3">
+                                <i class="fa-solid fa-paper-plane me-1"></i> Kirim Email Tes
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+    </form>
+
+    <!-- Form Khusus Tes Email (Terpisah agar tidak menimpa profil) -->
+    <form id="form_test_email" action="proses.php" method="POST">
+        <input type="hidden" name="aksi" value="test_email">
     </form>
 </main>
 

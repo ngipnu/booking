@@ -92,27 +92,68 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             
             $profil = $koneksi->query("SELECT email_pengelola_inventaris, email_pengelola_ruangan, email_admin, nama_lembaga FROM profil_lembaga LIMIT 1")->fetch_assoc();
             
-            $to_email  = '';
+            $recipients = [];
             $item_name = '';
             $tipe_label = '';
 
             if ($id_aset !== 'NULL') {
-                $to_email   = $profil['email_pengelola_inventaris'] ?: $profil['email_admin'];
                 $aset_info  = $koneksi->query("SELECT nama_aset, kode_aset FROM aset WHERE id = $id_aset")->fetch_assoc();
-                $item_name  = $aset_info['nama_aset'] . ' (' . $aset_info['kode_aset'] . ')';
+                $item_name  = ($aset_info['nama_aset'] ?? 'Barang') . ' (' . ($aset_info['kode_aset'] ?? '-') . ')';
                 $tipe_label = '📦 Barang / Inventaris';
-                $subject    = "[Sarpras] Pengajuan Pinjam Barang: {$aset_info['nama_aset']}";
+                $subject    = "[Sarpras] Pengajuan Pinjam Barang: " . ($aset_info['nama_aset'] ?? 'Barang');
+
+                // 1. Prioritas utama: Email pengelola inventaris dari profil lembaga
+                if (!empty($profil['email_pengelola_inventaris'])) {
+                    $recipients[] = trim($profil['email_pengelola_inventaris']);
+                }
             } else {
-                $to_email   = $profil['email_pengelola_ruangan'] ?: $profil['email_admin'];
                 $ruang_info = $koneksi->query("SELECT nama_ruangan, kode_ruangan FROM ruangan WHERE id = $id_ruangan")->fetch_assoc();
-                $item_name  = $ruang_info['nama_ruangan'] . ' (' . $ruang_info['kode_ruangan'] . ')';
+                $item_name  = ($ruang_info['nama_ruangan'] ?? 'Ruangan') . ' (' . ($ruang_info['kode_ruangan'] ?? '-') . ')';
                 $tipe_label = '🏫 Ruangan';
-                $subject    = "[Sarpras] Booking Ruangan: {$ruang_info['nama_ruangan']}";
+                $subject    = "[Sarpras] Booking Ruangan: " . ($ruang_info['nama_ruangan'] ?? 'Ruangan');
+
+                // 1. Prioritas utama: Email pengelola ruangan dari profil lembaga
+                if (!empty($profil['email_pengelola_ruangan'])) {
+                    $recipients[] = trim($profil['email_pengelola_ruangan']);
+                }
             }
 
-            if (!empty($to_email)) {
+            // 2. Fallback: Email Admin dari profil lembaga (jika bukan dummy default admin@annadzir.sch.id)
+            if (empty($recipients) && !empty($profil['email_admin'])) {
+                $adm = trim($profil['email_admin']);
+                if ($adm !== 'admin@annadzir.sch.id') {
+                    $recipients[] = $adm;
+                }
+            }
+
+            // 3. Fallback: Ambil email dari akun bertipe 'admin' di tabel users
+            if (empty($recipients)) {
+                $q_admin_users = $koneksi->query("SELECT email FROM users WHERE role = 'admin' AND email IS NOT NULL AND email != ''");
+                if ($q_admin_users) {
+                    while ($au = $q_admin_users->fetch_assoc()) {
+                        $e = trim($au['email']);
+                        if (!empty($e) && filter_var($e, FILTER_VALIDATE_EMAIL)) {
+                            $recipients[] = $e;
+                        }
+                    }
+                }
+            }
+
+            // 4. Fallback terakhir: MAIL_FROM dari .env atau email admin profil
+            if (empty($recipients)) {
+                if (!empty($_ENV['MAIL_FROM']) && filter_var($_ENV['MAIL_FROM'], FILTER_VALIDATE_EMAIL)) {
+                    $recipients[] = trim($_ENV['MAIL_FROM']);
+                } elseif (!empty($profil['email_admin'])) {
+                    $recipients[] = trim($profil['email_admin']);
+                }
+            }
+
+            // Bersihkan duplikat & format
+            $recipients = array_unique(array_filter($recipients));
+
+            if (!empty($recipients)) {
                 $tgl_fmt    = date('l, d F Y', strtotime($tgl_pinjam));
-                $lembaga    = htmlspecialchars($profil['nama_lembaga']);
+                $lembaga    = htmlspecialchars($profil['nama_lembaga'] ?? 'Sarpras');
                 $nama_html  = htmlspecialchars($_SESSION['nama_pemakai']);
                 $unit_html  = htmlspecialchars($_SESSION['unit_pemakai']);
                 $item_html  = htmlspecialchars($item_name);
@@ -155,7 +196,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     </div>
                 </div>";
 
-                kirimEmail($to_email, $subject, $body);
+                $mail_err = '';
+                $sent = kirimEmail($recipients, $subject, $body, $mail_err);
+                if (!$sent) {
+                    error_log("Gagal mengirim email pengajuan: " . $mail_err);
+                }
+            } else {
+                error_log("Pengajuan berhasil dibuat, tetapi tidak ada email penerima notifikasi yang terkonfigurasi.");
             }
         } catch (\Throwable $e) {
             error_log("Email error: " . $e->getMessage());
