@@ -44,10 +44,11 @@ $result = $koneksi->query($query);
 // Summary Stats
 $stats_query = "SELECT 
     COUNT(*) as total,
-    SUM(CASE WHEN kondisi = 'baik' THEN 1 ELSE 0 END) as baik,
-    SUM(CASE WHEN kondisi != 'baik' THEN 1 ELSE 0 END) as rusak,
-    SUM(harga_beli) as total_nilai
+    SUM(CASE WHEN a.kondisi = 'baik' THEN 1 ELSE 0 END) as baik,
+    SUM(CASE WHEN a.kondisi != 'baik' THEN 1 ELSE 0 END) as rusak,
+    SUM(a.harga_beli) as total_nilai
     FROM aset a
+    LEFT JOIN kategori k ON a.id_kategori = k.id
     WHERE $where_sql";
 $stats_res = $koneksi->query($stats_query);
 $stats = $stats_res ? $stats_res->fetch_assoc() : ['total'=>0,'baik'=>0,'rusak'=>0,'total_nilai'=>0];
@@ -130,12 +131,12 @@ echo "\xEF\xBB\xBF"; // BOM UTF-8
         ?>
         <tr>
             <td><?= $no++ ?></td>
-            <td style="font-weight:bold; color:#0f766e;"><?= htmlspecialchars($row['kode_aset']) ?></td>
-            <td><?= htmlspecialchars($row['nama_aset']) ?></td>
-            <td><?= htmlspecialchars(trim($row['merk'] . ' ' . $row['warna'])) ?></td>
+            <td style="font-weight:bold; color:#0f766e;"><?= htmlspecialchars($row['kode_aset'] ?? '') ?></td>
+            <td><?= htmlspecialchars($row['nama_aset'] ?? '') ?></td>
+            <td><?= htmlspecialchars(trim(($row['merk'] ?? '') . ' ' . ($row['warna'] ?? ''))) ?></td>
             <td><?= htmlspecialchars($row['nama_kategori'] ?? '-') ?></td>
-            <td><?= htmlspecialchars($row['unit_pengguna']) ?></td>
-            <td><?= htmlspecialchars($row['lokasi_simpan']) ?></td>
+            <td><?= htmlspecialchars($row['unit_pengguna'] ?? '-') ?></td>
+            <td><?= htmlspecialchars($row['lokasi_simpan'] ?? '-') ?></td>
             <td class="<?= $kondisi_class ?>"><?= $kondisi_label ?></td>
             <td style="text-align:right;">Rp <?= number_format($row['harga_beli'], 0, ',', '.') ?></td>
         </tr>

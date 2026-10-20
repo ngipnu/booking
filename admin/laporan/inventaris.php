@@ -47,10 +47,11 @@ $result = $koneksi->query($query);
 // Summary Stats
 $stats_query = "SELECT 
     COUNT(*) as total,
-    SUM(CASE WHEN kondisi = 'baik' THEN 1 ELSE 0 END) as baik,
-    SUM(CASE WHEN kondisi != 'baik' THEN 1 ELSE 0 END) as rusak,
-    SUM(harga_beli) as total_nilai
+    SUM(CASE WHEN a.kondisi = 'baik' THEN 1 ELSE 0 END) as baik,
+    SUM(CASE WHEN a.kondisi != 'baik' THEN 1 ELSE 0 END) as rusak,
+    SUM(a.harga_beli) as total_nilai
     FROM aset a
+    LEFT JOIN kategori k ON a.id_kategori = k.id
     WHERE $where_sql";
 $stats_res = $koneksi->query($stats_query);
 $stats = $stats_res ? $stats_res->fetch_assoc() : ['total'=>0, 'baik'=>0, 'rusak'=>0, 'total_nilai'=>0];
@@ -232,12 +233,12 @@ include '../layouts/sidebar.php';
                             <td class="ps-4"><?= $no++ ?></td>
                             <td class="fw-bold text-primary"><?= $row['kode_aset'] ?></td>
                             <td>
-                                <div class="fw-medium text-dark"><?= htmlspecialchars($row['nama_aset']) ?></div>
-                                <div class="text-muted small" style="font-size: 0.7rem;"><?= htmlspecialchars($row['merk'] . ' ' . $row['warna']) ?></div>
+                                <div class="fw-medium text-dark"><?= htmlspecialchars($row['nama_aset'] ?? '') ?></div>
+                                <div class="text-muted small" style="font-size: 0.7rem;"><?= htmlspecialchars(trim(($row['merk'] ?? '') . ' ' . ($row['warna'] ?? ''))) ?></div>
                             </td>
                             <td><?= htmlspecialchars($row['nama_kategori'] ?? '-') ?></td>
-                            <td><?= htmlspecialchars($row['unit_pengguna']) ?></td>
-                            <td><?= htmlspecialchars($row['lokasi_simpan']) ?></td>
+                            <td><?= htmlspecialchars($row['unit_pengguna'] ?? '-') ?></td>
+                            <td><?= htmlspecialchars($row['lokasi_simpan'] ?? '-') ?></td>
                             <td class="text-center">
                                 <?php 
                                     $c = $row['kondisi'];
