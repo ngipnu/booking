@@ -40,18 +40,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exit;
     }
 
-    $status_awal = ($id_aset !== 'NULL') ? 'disetujui' : 'menunggu';
+    // Status awal peminjaman (baik barang maupun ruangan) selalu 'menunggu' konfirmasi tim manajemen/admin
+    $status_awal = 'menunggu';
 
     $sql = "INSERT INTO peminjaman (id_user, id_aset, id_ruangan, tgl_pinjam, tgl_kembali, jam_mulai, jam_selesai, nama_peminjam, unit_peminjam, keperluan, status_pinjam, waktu_disetujui) 
-            VALUES ($id_user, $id_aset, $id_ruangan, '$tgl_pinjam', '$tgl_pinjam', '$jam_mulai', '$jam_selesai', '$nama_peminjam', '$unit_peminjam', '$keperluan', '$status_awal', " . ($status_awal === 'disetujui' ? 'NOW()' : 'NULL') . ")";
+            VALUES ($id_user, $id_aset, $id_ruangan, '$tgl_pinjam', '$tgl_pinjam', '$jam_mulai', '$jam_selesai', '$nama_peminjam', '$unit_peminjam', '$keperluan', '$status_awal', NULL)";
 
     if ($koneksi->query($sql)) {
-        // Jika aset: auto-approve → update status aset menjadi 'dipinjam'
         if ($id_aset !== 'NULL') {
-            $koneksi->query("UPDATE aset SET status = 'dipinjam' WHERE id = $id_aset");
-            $_SESSION['pesan_sukses'] = "✅ Peminjaman inventaris berhasil! Barang langsung dapat diambil.";
+            $_SESSION['pesan_sukses'] = "📋 Pengajuan peminjaman barang berhasil dikirim! Menunggu konfirmasi dan persetujuan tim manajemen/admin.";
         } else {
-            $_SESSION['pesan_sukses'] = "📋 Pengajuan ruangan berhasil dikirim! Menunggu persetujuan admin.";
+            $_SESSION['pesan_sukses'] = "📋 Pengajuan booking ruangan berhasil dikirim! Menunggu konfirmasi dan persetujuan tim manajemen/admin.";
         }
 
         // Notifikasi in-app ke semua admin
@@ -62,25 +61,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($id_aset !== 'NULL') {
             $item_info = $koneksi->query("SELECT nama_aset FROM aset WHERE id = $id_aset")->fetch_assoc();
             $item_name = $item_info['nama_aset'];
-            // Notifikasi informasi saja — tidak perlu aksi dari admin
+            // Notifikasi perlu tindakan — barang butuh approval admin
             kirimNotifikasi($koneksi, $admin_ids,
-                "📦 Inventaris Dipinjam: $item_name",
-                "{$_SESSION['nama_pemakai']} ({$_SESSION['unit_pemakai']}) meminjam \"$item_name\" pada " .
+                "📦 Perlu Disetujui: $item_name",
+                "{$_SESSION['nama_pemakai']} ({$_SESSION['unit_pemakai']}) mengajukan peminjaman barang \"$item_name\" pada " .
                 date('d M Y', strtotime($tgl_pinjam)) . " pukul " .
-                substr($jam_mulai,0,5) . "–" . substr($jam_selesai,0,5) . ". (Otomatis disetujui)",
-                'info',
+                substr($jam_mulai,0,5) . "–" . substr($jam_selesai,0,5) . ". Mohon segera dikonfirmasi.",
+                'warning',
                 '../peminjaman/index.php'
             );
             $notif_link = '../peminjaman/index.php';
         } else {
             $item_info = $koneksi->query("SELECT nama_ruangan FROM ruangan WHERE id = $id_ruangan")->fetch_assoc();
             $item_name = $item_info['nama_ruangan'];
-            // Notifikasi perlu tindakan — ruangan butuh approval
+            // Notifikasi perlu tindakan — ruangan butuh approval admin
             kirimNotifikasi($koneksi, $admin_ids,
                 "🏫 Perlu Disetujui: $item_name",
                 "{$_SESSION['nama_pemakai']} ({$_SESSION['unit_pemakai']}) mengajukan booking ruangan \"$item_name\" pada " .
                 date('d M Y', strtotime($tgl_pinjam)) . " pukul " .
-                substr($jam_mulai,0,5) . "–" . substr($jam_selesai,0,5) . ". Mohon segera diproses.",
+                substr($jam_mulai,0,5) . "–" . substr($jam_selesai,0,5) . ". Mohon segera dikonfirmasi.",
                 'warning',
                 '../peminjaman/index.php'
             );
