@@ -26,12 +26,13 @@ if (empty($_ENV['MAIL_USERNAME'])) {
     }
 }
 
-if (!defined('MAIL_HOST'))      define('MAIL_HOST',      $_ENV['MAIL_HOST'] ?? 'smtp-relay.brevo.com');
-if (!defined('MAIL_PORT'))      define('MAIL_PORT',      (int)($_ENV['MAIL_PORT'] ?? 587));
-if (!defined('MAIL_USERNAME'))  define('MAIL_USERNAME',  $_ENV['MAIL_USERNAME'] ?? '');
-if (!defined('MAIL_PASSWORD'))  define('MAIL_PASSWORD',  $_ENV['MAIL_PASSWORD'] ?? '');
-if (!defined('MAIL_FROM'))      define('MAIL_FROM',      $_ENV['MAIL_FROM'] ?? '');
-if (!defined('MAIL_FROM_NAME')) define('MAIL_FROM_NAME', $_ENV['MAIL_FROM_NAME'] ?? 'Sarpras An Nadzir');
+if (!defined('MAIL_HOST'))       define('MAIL_HOST',       $_ENV['MAIL_HOST'] ?? 'smtp-relay.brevo.com');
+if (!defined('MAIL_PORT'))       define('MAIL_PORT',       (int)($_ENV['MAIL_PORT'] ?? 587));
+if (!defined('MAIL_USERNAME'))   define('MAIL_USERNAME',   $_ENV['MAIL_USERNAME'] ?? '');
+if (!defined('MAIL_PASSWORD'))   define('MAIL_PASSWORD',   $_ENV['MAIL_PASSWORD'] ?? '');
+if (!defined('MAIL_FROM'))       define('MAIL_FROM',       $_ENV['MAIL_FROM'] ?? '');
+if (!defined('MAIL_FROM_NAME'))  define('MAIL_FROM_NAME',  $_ENV['MAIL_FROM_NAME'] ?? 'Sarpras An Nadzir');
+if (!defined('MAIL_ENCRYPTION')) define('MAIL_ENCRYPTION', strtolower((string)($_ENV['MAIL_ENCRYPTION'] ?? (MAIL_PORT === 465 ? 'ssl' : 'tls'))));
 
 /**
  * Kirim email menggunakan PHPMailer + Brevo SMTP
@@ -59,7 +60,11 @@ function kirimEmail($to, string $subject, string $body, ?string &$errorMsg = nul
         $mail->AuthType   = 'LOGIN';   // Brevo wajib LOGIN, bukan CRAM-MD5
         $mail->Username   = MAIL_USERNAME;
         $mail->Password   = MAIL_PASSWORD;
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        if (MAIL_PORT === 465 || MAIL_ENCRYPTION === 'ssl') {
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        } else {
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        }
         $mail->Port       = MAIL_PORT;
         $mail->CharSet    = 'UTF-8';
         $mail->Timeout    = 15;

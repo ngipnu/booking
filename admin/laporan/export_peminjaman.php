@@ -25,15 +25,16 @@ if (!empty($filter_status)) {
 }
 if (!empty($filter_search)) {
     $search = $koneksi->real_escape_string($filter_search);
-    $where_clauses[] = "(p.nama_peminjam LIKE '%$search%' OR u.nama LIKE '%$search%' OR a.nama_aset LIKE '%$search%' OR a.kode_aset LIKE '%$search%')";
+    $where_clauses[] = "(p.nama_peminjam LIKE '%$search%' OR u.nama LIKE '%$search%' OR a.nama_aset LIKE '%$search%' OR a.kode_aset LIKE '%$search%' OR r.nama_ruangan LIKE '%$search%' OR r.kode_ruangan LIKE '%$search%')";
 }
 
 $where_sql = implode(" AND ", $where_clauses);
 
-$query = "SELECT p.*, u.nama as nama_user, a.nama_aset, a.kode_aset 
+$query = "SELECT p.*, u.nama as nama_user, a.nama_aset, a.kode_aset, r.nama_ruangan, r.kode_ruangan as kode_r 
           FROM peminjaman p 
           LEFT JOIN users u ON p.id_user = u.id 
           LEFT JOIN aset a ON p.id_aset = a.id 
+          LEFT JOIN ruangan r ON p.id_ruangan = r.id 
           WHERE $where_sql
           ORDER BY p.tgl_pinjam DESC, p.jam_mulai DESC";
 $result = $koneksi->query($query);
@@ -41,12 +42,13 @@ $result = $koneksi->query($query);
 // Summary Stats
 $stats_query = "SELECT 
     COUNT(*) as total,
-    SUM(CASE WHEN status_pinjam = 'menunggu' THEN 1 ELSE 0 END) as menunggu,
-    SUM(CASE WHEN status_pinjam = 'disetujui' THEN 1 ELSE 0 END) as disetujui,
-    SUM(CASE WHEN status_pinjam = 'selesai' THEN 1 ELSE 0 END) as selesai
+    SUM(CASE WHEN p.status_pinjam = 'menunggu' THEN 1 ELSE 0 END) as menunggu,
+    SUM(CASE WHEN p.status_pinjam = 'disetujui' THEN 1 ELSE 0 END) as disetujui,
+    SUM(CASE WHEN p.status_pinjam = 'selesai' THEN 1 ELSE 0 END) as selesai
     FROM peminjaman p
     LEFT JOIN users u ON p.id_user = u.id
     LEFT JOIN aset a ON p.id_aset = a.id
+    LEFT JOIN ruangan r ON p.id_ruangan = r.id
     WHERE $where_sql";
 $stats_res = $koneksi->query($stats_query);
 $stats = $stats_res ? $stats_res->fetch_assoc() : ['total'=>0,'menunggu'=>0,'disetujui'=>0,'selesai'=>0];
@@ -124,7 +126,13 @@ echo "\xEF\xBB\xBF"; // BOM UTF-8
         <?php
             $nama  = $row['nama_peminjam'] ?: ($row['nama_user'] ?? 'Anonim');
             $unit  = $row['unit_peminjam'] ?: 'Umum/LRC';
-            $aset  = $row['nama_aset'] . ' (' . $row['kode_aset'] . ')';
+            if (!empty($row['nama_aset'])) {
+                $aset = $row['nama_aset'] . (!empty($row['kode_aset']) ? ' (' . $row['kode_aset'] . ')' : '');
+            } elseif (!empty($row['nama_ruangan'])) {
+                $aset = $row['nama_ruangan'] . (!empty($row['kode_r']) ? ' (' . $row['kode_r'] . ')' : '');
+            } else {
+                $aset = '-';
+            }
             $tgl   = date('d/m/Y', strtotime($row['tgl_pinjam']));
             $jam   = substr($row['jam_mulai'],0,5) . ' - ' . substr($row['jam_selesai'],0,5);
             $waktu = $tgl . ', ' . $jam;
@@ -138,7 +146,7 @@ echo "\xEF\xBB\xBF"; // BOM UTF-8
             <td><?= htmlspecialchars($unit) ?></td>
             <td><?= htmlspecialchars($aset) ?></td>
             <td><?= $waktu ?></td>
-            <td><?= htmlspecialchars($row['keperluan']) ?></td>
+            <td><?= htmlspecialchars($row['keperluan'] ?? '') ?></td>
             <td class="<?= $badge ?>"><?= $status_label ?></td>
         </tr>
         <?php endwhile; ?>
